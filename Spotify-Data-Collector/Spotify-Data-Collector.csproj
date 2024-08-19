@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="dotenv.net" Version="3.2.0" />
     <PackageReference Include="SpotifyAPI.web" Version="7.1.1" />
   </ItemGroup>
 

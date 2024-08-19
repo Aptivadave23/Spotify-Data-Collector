@@ -1,5 +1,11 @@
 using SpotifyAPI.Web;
 using SpotifyDataCollector;
+using dotenv.net;
+
+
+DotEnv.Load();
+var clientId = Environment.GetEnvironmentVariable("SPOTIFY_CLIENT_ID");
+var clientSecret = Environment.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET");
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -19,24 +25,42 @@ if (app.Environment.IsDevelopment())
 app.MapGet("/", () =>
 {
     Console.WriteLine("Route Hit");
-    var clientId = Environment.GetEnvironmentVariable("SPOTIFY_CLIENT_ID");
-    var clientSecret = Environment.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET");
+    
     return clientId.ToString();
 }
 );
 
 app.MapGet("/Spotify", async () =>
 {
-    var clientId = "{ClientId}";
-    var clientSecret = "{clientSecret}";
+   
 Console.WriteLine(clientId + " " + clientSecret);
     var config = SpotifyClientConfig
         .CreateDefault()
         .WithAuthenticator(new ClientCredentialsAuthenticator(clientId, clientSecret));
-    var spotify = new SpotifyClient(config);
-    var user = await spotify.UserProfile.Current();
-    var response = await spotify.Search.Item(new SearchRequest(SearchRequest.Types.Track, "Never Gonna Give You Up"));
-    return user.DisplayName;
+    var request = new ClientCredentialsRequest(clientId, clientSecret);
+    var response = await new OAuthClient(config).RequestToken(request);
+
+    var spotify = new SpotifyClient(config.WithToken(response.AccessToken));
+
+    var artist = await spotify.Artists.Get("0OdUWJ0sBjDrqHygGUXeCF");
+
+    return artist.Name;
+}
+);
+
+app.MapGet("/Spotify/Search/Artist/{search}", async (string search) =>
+{
+    var config = SpotifyClientConfig
+        .CreateDefault()
+        .WithAuthenticator(new ClientCredentialsAuthenticator(clientId, clientSecret));
+    var request = new ClientCredentialsRequest(clientId, clientSecret);
+    var response = await new OAuthClient(config).RequestToken(request);
+
+    var spotify = new SpotifyClient(config.WithToken(response.AccessToken));
+
+    var searchResults = await spotify.Search.Item(new SearchRequest(SearchRequest.Types.Artist, search));
+
+    return searchResults.Artists.Items.ToList();
 }
 );
 
