@@ -9,8 +9,13 @@ var clientSecret = Environment.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET");
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddSingleton<Spotify>();
 
 var app = builder.Build();
+// Initialize the Spotify client
+var serviceProvider = app.Services.CreateScope().ServiceProvider;
+var spotify = serviceProvider.GetRequiredService<Spotify>();
+spotify.InitializeClientAsync().Wait();
 
 // Configure the HTTP request pipeline.
 
@@ -30,35 +35,19 @@ app.MapGet("/", () =>
 }
 );
 
-app.MapGet("/Spotify", async () =>
+app.MapGet("/Spotify", async (Spotify spotify) =>
 {
-   
-Console.WriteLine(clientId + " " + clientSecret);
-    var config = SpotifyClientConfig
-        .CreateDefault()
-        .WithAuthenticator(new ClientCredentialsAuthenticator(clientId, clientSecret));
-    var request = new ClientCredentialsRequest(clientId, clientSecret);
-    var response = await new OAuthClient(config).RequestToken(request);
+    //await spotify.InitializeClientAsync();
 
-    var spotify = new SpotifyClient(config.WithToken(response.AccessToken));
-
-    var artist = await spotify.Artists.Get("0OdUWJ0sBjDrqHygGUXeCF");
-
-    return artist.Name;
+    return spotify.ToString();
 }
 );
 
 app.MapGet("/Spotify/Search/Artist/{search}", async (string search) =>
 {
-    var config = SpotifyClientConfig
-        .CreateDefault()
-        .WithAuthenticator(new ClientCredentialsAuthenticator(clientId, clientSecret));
-    var request = new ClientCredentialsRequest(clientId, clientSecret);
-    var response = await new OAuthClient(config).RequestToken(request);
+    
 
-    var spotify = new SpotifyClient(config.WithToken(response.AccessToken));
-
-    var searchResults = await spotify.Search.Item(new SearchRequest(SearchRequest.Types.Artist, search));
+    var searchResults = await spotify.Search(search);
 
     return searchResults.Artists.Items.ToList();
 }
