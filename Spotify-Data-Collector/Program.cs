@@ -46,7 +46,7 @@ app.MapGet("/Spotify", async (Spotify spotify) =>
 app.MapGet("/Spotify/Search/Artist/{search}", async (Microsoft.AspNetCore.Http.HttpContext context, string search) =>
 {    
 
-    var searchResults = await spotify.Search(search);
+    var searchResults = await spotify.Search(search, SearchRequest.Types.Artist);
 
     var Artists = searchResults.Artists.Items.ToList();
 
@@ -79,7 +79,7 @@ app.MapGet("/Spotify/Search/Artist/{search}", async (Microsoft.AspNetCore.Http.H
 
 app.MapGet("/Spotify/Search/Album/{search}", async (Microsoft.AspNetCore.Http.HttpContext context, string search) =>
 {
-    var searchResults = await spotify.Search(search);
+    var searchResults = await spotify.Search(search, SearchRequest.Types.Album);
 
     var Album = searchResults.Albums.Items.ToList();
 

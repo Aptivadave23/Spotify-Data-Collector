@@ -58,9 +58,14 @@ namespace SpotifyDataCollector
             return albumDTOs;
         }
 
-        public async Task<SearchResponse> Search(string query)
+        public async Task<SearchResponse> Search(string query, SearchRequest.Types searchType, string market = "US")
         {
-            return await spotifyClient.Search.Item(new SearchRequest(SearchRequest.Types.All, query));
+            var searchRequest = new SearchRequest(searchType, query)
+            {
+                Market = market
+            };
+            
+            return await spotifyClient.Search.Item(searchRequest);  
         }
         
     }
