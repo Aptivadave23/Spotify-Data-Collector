@@ -14,17 +14,7 @@ builder.Services.AddScoped<ISpotifyService, Spotify>();
 
 var app = builder.Build();
 
-
-
-
-/*static async Task Main(string[] args)
-    {
-        ISpotifyService spotifyService = new Spotify();
-        await spotifyService.InitializeClientAsync();       
-        
-    }*/
-
-    // Initialize the Spotify client
+// Initialize the Spotify client
 var serviceProvider = app.Services.CreateScope().ServiceProvider;
 var spotifyService = serviceProvider.GetRequiredService<ISpotifyService>();
 spotifyService.InitializeClientAsync().Wait();
