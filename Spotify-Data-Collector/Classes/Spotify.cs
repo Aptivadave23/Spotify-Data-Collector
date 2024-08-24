@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace SpotifyDataCollector
 {
-    public class Spotify
+    public class Spotify : ISpotifyService
     {
         // Add your class members and methods here
         private string clientId { get; set; }
@@ -64,7 +64,7 @@ namespace SpotifyDataCollector
             {
                 Market = market
             };
-            
+
             return await spotifyClient.Search.Item(searchRequest);  
         }
         
