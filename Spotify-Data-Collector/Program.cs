@@ -10,13 +10,24 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddSingleton<Spotify>();
+builder.Services.AddScoped<ISpotifyService, Spotify>();
 
 var app = builder.Build();
-// Initialize the Spotify client
-var serviceProvider = app.Services.CreateScope().ServiceProvider;
-var spotify = serviceProvider.GetRequiredService<Spotify>();
-spotify.InitializeClientAsync().Wait();
 
+
+
+
+/*static async Task Main(string[] args)
+    {
+        ISpotifyService spotifyService = new Spotify();
+        await spotifyService.InitializeClientAsync();       
+        
+    }*/
+
+    // Initialize the Spotify client
+var serviceProvider = app.Services.CreateScope().ServiceProvider;
+var spotifyService = serviceProvider.GetRequiredService<ISpotifyService>();
+spotifyService.InitializeClientAsync().Wait();
 // Configure the HTTP request pipeline.
 
 if (app.Environment.IsDevelopment())
@@ -35,7 +46,7 @@ app.MapGet("/", () =>
 }
 );
 
-app.MapGet("/Spotify", async (Spotify spotify) =>
+app.MapGet("/Spotify", async (ISpotifyService spotify) =>
 {
     //await spotify.InitializeClientAsync();
 
@@ -46,7 +57,7 @@ app.MapGet("/Spotify", async (Spotify spotify) =>
 app.MapGet("/Spotify/Search/Artist/{search}", async (Microsoft.AspNetCore.Http.HttpContext context, string search) =>
 {    
 
-    var searchResults = await spotify.Search(search, SearchRequest.Types.Artist);
+    var searchResults = await spotifyService.Search(search, SearchRequest.Types.Artist);
 
     var Artists = searchResults.Artists.Items.ToList();
 
@@ -59,8 +70,8 @@ app.MapGet("/Spotify/Search/Artist/{search}", async (Microsoft.AspNetCore.Http.H
         List<ArtistDto> artistDto = new List<ArtistDto>();
         foreach (var artist in Artists)
         {
-        var artistDetails = await spotify.GetArtist(artist.Id);
-        var artistAlbums = await spotify.GetArtistAlbums(artist.Id);
+        var artistDetails = await spotifyService.GetArtist(artist.Id);
+        var artistAlbums = await spotifyService.GetArtistAlbums(artist.Id);
         var discography = artistAlbums.Select(album => new AlbumDto(album.Name, album.Id, album.ReleaseDate, album.ImageUrl)).ToList();
         artistDto.Add(new ArtistDto(
             artistDetails.Name, 
@@ -79,21 +90,21 @@ app.MapGet("/Spotify/Search/Artist/{search}", async (Microsoft.AspNetCore.Http.H
 
 app.MapGet("/Spotify/Search/Album/{search}", async (Microsoft.AspNetCore.Http.HttpContext context, string search) =>
 {
-    var searchResults = await spotify.Search(search, SearchRequest.Types.Album);
+    var searchResults = await spotifyService.Search(search, SearchRequest.Types.Album);
 
-    var Album = searchResults.Albums.Items.ToList();
+    var Albums = searchResults.Albums.Items.ToList();
 
     
 
-    if (Album.Count() == 0)
+    if (Albums.Count() == 0)
     {
         return Results.NotFound();
     }
     else 
     {
         List<AlbumDto> albums = new List<AlbumDto>();
-        foreach (var a in Album){
-            var albumDetails = await spotify.GetAlbum(a.Id);
+        foreach (var a in Albums){
+            var albumDetails = await spotifyService.GetAlbum(a.Id);
             var albumDto = new AlbumDto(
                 albumDetails.Name, 
                 albumDetails.Id, 
