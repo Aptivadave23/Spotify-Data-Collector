@@ -1,5 +1,6 @@
 using System;
 using SpotifyAPI.Web;
+using System.Linq;
 
 namespace SpotifyDataCollector
 {
@@ -37,14 +38,24 @@ namespace SpotifyDataCollector
             return await spotifyClient.Tracks.Get(trackId);
         }
 
-        public async Task<FullAlbum> GetAlbum(string albumId)
+        public async Task<AlbumDto> GetAlbum(string albumId)
         {
-            return await spotifyClient.Albums.Get(albumId);
+            var album = await spotifyClient.Albums.Get(albumId, new AlbumRequest{Market = "US"});
+            return new AlbumDto(album.Name, album.Id, album.ReleaseDate, album.Images[0].Url);
         }
 
         public async Task<FullPlaylist> GetPlaylist(string playlistId)
         {
             return await spotifyClient.Playlists.Get(playlistId);
+        }
+
+        public async Task<List<AlbumDto>> GetArtistAlbums(string artistId)
+        {
+            var pagingResult = await spotifyClient.Artists.GetAlbums(artistId, new ArtistsAlbumsRequest{Market = "US"});
+            //var albumDTOs = pagingResult.Items.Select(album => new AlbumDto(album.Name, album.Id, album.ReleaseDate, album.Images[0].Url)).ToList();
+            var albumDTOs = pagingResult.Items.Select(album => new AlbumDto(album.Name, album.Id, album.ReleaseDate, album.Images[0].Url)).ToList();
+
+            return albumDTOs;
         }
 
         public async Task<SearchResponse> Search(string query)
