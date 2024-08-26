@@ -73,6 +73,37 @@ namespace SpotifyDataCollector
 
             return await spotifyClient.Search.Item(searchRequest);  
         }
-        
+
+        public async Task<List<AlbumDto>> SearchAlbums(string search)
+        {
+            var searchResults = await Search(search, SearchRequest.Types.Album);
+
+            var Albums = searchResults.Albums.Items.ToList();
+
+            List<AlbumDto> albums = new List<AlbumDto>();
+
+            if (Albums.Count() > 0)   
+            {
+            
+                foreach (var a in Albums){
+                    var albumDetails = await GetAlbum(a.Id);
+                    var albumDto = new AlbumDto(
+                        albumDetails.Name, 
+                        albumDetails.Id, 
+                        albumDetails.ReleaseDate, 
+                        albumDetails.ImageUrl,
+                        albumDetails.AlbumType,
+                        albumDetails.TotalTracks,
+                        albumDetails.Popularity,
+                        albumDetails.SpotifyUrl,
+                        albumDetails.ArtistId,
+                        albumDetails.ArtistName
+                        );
+                    albums.Add(albumDto);
+                }
+                }
+                return albums;
+                
+            }
     }
 }

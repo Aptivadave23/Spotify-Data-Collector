@@ -14,5 +14,6 @@ namespace SpotifyDataCollector
         Task<List<AlbumDto>> GetArtistAlbums(string artistId);
         Task<SearchResponse> Search(string query, SearchRequest.Types searchType, string market = "US");
         Task<TrackDTO> GetTrack(string trackId);
+        Task<List<AlbumDto>> SearchAlbums(string search);
     }
 }
