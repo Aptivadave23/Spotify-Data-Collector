@@ -62,13 +62,13 @@ app.MapGet("/Spotify/Search/Artist/{search}", async (Microsoft.AspNetCore.Http.H
         {
         var artistDetails = await spotifyService.GetArtist(artist.Id);
         var artistAlbums = await spotifyService.GetArtistAlbums(artist.Id);
-        var discography = artistAlbums.Select(album => new AlbumDto(album.Name, album.Id, album.ReleaseDate, album.ImageUrl)).ToList();
+       
         artistDto.Add(new ArtistDto(
             artistDetails.Name, 
             artistDetails.Id, 
-            artistDetails.Genres, 
+            artistDetails.Genres,            
             artistDetails.ExternalUrls["spotify"],
-            discography
+            artistDetails.Popularity.ToString()
             ));
         }
         
@@ -99,13 +99,25 @@ app.MapGet("/Spotify/Search/Album/{search}", async (Microsoft.AspNetCore.Http.Ht
                 albumDetails.Name, 
                 albumDetails.Id, 
                 albumDetails.ReleaseDate, 
-                albumDetails.ImageUrl
+                albumDetails.ImageUrl,
+                albumDetails.AlbumType,
+                albumDetails.TotalTracks,
+                albumDetails.Popularity,
+                albumDetails.SpotifyUrl,
+                albumDetails.ArtistId,
+                albumDetails.ArtistName
                 );
             albums.Add(albumDto);
         }
 
         return Results.Ok(albums.ToList());
     }
+});
+
+app.MapGet("/Spotify/Album/{id}", async (Microsoft.AspNetCore.Http.HttpContext context, string id) =>
+{
+    var album = await spotifyService.GetAlbum(id);
+    return Results.Ok(album);
 }
 );
 

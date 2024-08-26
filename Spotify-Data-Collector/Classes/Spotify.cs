@@ -1,6 +1,7 @@
 using System;
 using SpotifyAPI.Web;
 using System.Linq;
+using Spotify_Data_Collector;
 
 namespace SpotifyDataCollector
 {
@@ -33,15 +34,19 @@ namespace SpotifyDataCollector
             return await spotifyClient.Artists.Get(artistId);
         }
 
-        public async Task<FullTrack> GetTrack(string trackId)
+        public async Task<TrackDTO> GetTrack(string trackId)
         {
-            return await spotifyClient.Tracks.Get(trackId);
+            var track = await spotifyClient.Tracks.Get(trackId);
+            return new TrackDTO(track.Name, track.Id, track.DurationMs.ToString(), track.Popularity.ToString(), track.ExternalUrls["spotify"], track.Album.Id, track.Album.ReleaseDate, track.DiscNumber.ToString(), track.TrackNumber.ToString());
         }
+
+        
 
         public async Task<AlbumDto> GetAlbum(string albumId)
         {
             var album = await spotifyClient.Albums.Get(albumId, new AlbumRequest{Market = "US"});
-            return new AlbumDto(album.Name, album.Id, album.ReleaseDate, album.Images[0].Url);
+            return new AlbumDto(album.Name, album.Id, album.ReleaseDate, album.Images[0].Url,
+                album.AlbumType.ToString(), album.TotalTracks.ToString(), "0", album.ExternalUrls.ToString(), album.Artists[0].Id, album.Artists[0].Name);
         }
 
         public async Task<FullPlaylist> GetPlaylist(string playlistId)
@@ -52,9 +57,10 @@ namespace SpotifyDataCollector
         public async Task<List<AlbumDto>> GetArtistAlbums(string artistId)
         {
             var pagingResult = await spotifyClient.Artists.GetAlbums(artistId, new ArtistsAlbumsRequest{Market = "US"});
-            //var albumDTOs = pagingResult.Items.Select(album => new AlbumDto(album.Name, album.Id, album.ReleaseDate, album.Images[0].Url)).ToList();
-            var albumDTOs = pagingResult.Items.Select(album => new AlbumDto(album.Name, album.Id, album.ReleaseDate, album.Images[0].Url)).ToList();
-
+            var albumDTOs = pagingResult.Items.Select(album => new AlbumDto(
+                album.Name, album.Id, album.ReleaseDate, album.Images[0].Url,
+                album.AlbumType, album.TotalTracks.ToString(), "0", album.ExternalUrls.ToString(), artistId, "Artist")).ToList();
+           
             return albumDTOs;
         }
 
