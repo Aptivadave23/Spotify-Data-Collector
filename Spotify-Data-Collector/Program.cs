@@ -46,37 +46,11 @@ app.MapGet("/Spotify", async (ISpotifyService spotify) =>
 
 app.MapGet("/Spotify/Search/Artist/{search}", async (Microsoft.AspNetCore.Http.HttpContext context, string search) =>
 {    
+    var artists = await spotifyService.SearchArtists(search);
+    return Results.Ok(artists.ToList());
+    
+});
 
-    var searchResults = await spotifyService.Search(search, SearchRequest.Types.Artist);
-
-    var Artists = searchResults.Artists.Items.ToList();
-
-    if (Artists.Count() == 0)
-    {
-        return Results.NotFound();
-    }
-    else 
-    {
-        List<ArtistDto> artistDto = new List<ArtistDto>();
-        foreach (var artist in Artists)
-        {
-        var artistDetails = await spotifyService.GetArtist(artist.Id);
-        var artistAlbums = await spotifyService.GetArtistAlbums(artist.Id);
-       
-        artistDto.Add(new ArtistDto(
-            artistDetails.Name, 
-            artistDetails.Id, 
-            artistDetails.Genres,            
-            artistDetails.ExternalUrls["spotify"],
-            artistDetails.Popularity.ToString()
-            ));
-        }
-        
-
-        return Results.Ok(artistDto);
-    }
-}
-);
 
 app.MapGet("/Spotify/Search/Album/{search}", async (Microsoft.AspNetCore.Http.HttpContext context, string search) =>
 {
@@ -85,10 +59,33 @@ app.MapGet("/Spotify/Search/Album/{search}", async (Microsoft.AspNetCore.Http.Ht
     
 });
 
+app.MapGet("/Spotify/Search/Track/{search}", async (Microsoft.AspNetCore.Http.HttpContext context, string search) =>
+{
+    var tracks = await spotifyService.SearchTracks(search);
+    return Results.Ok(tracks.ToList());
+}
+);
+
 app.MapGet("/Spotify/Album/{id}", async (Microsoft.AspNetCore.Http.HttpContext context, string id) =>
 {
     var album = await spotifyService.GetAlbum(id);
     return Results.Ok(album);
+}
+);
+
+
+
+app.MapGet("/Spotify/Artist/{id}", async (Microsoft.AspNetCore.Http.HttpContext context, string id) =>
+{
+    var artist = await spotifyService.GetArtist(id);
+    return Results.Ok(artist);
+}
+);
+
+app.MapGet("/Spotify/Track/{id}", async (Microsoft.AspNetCore.Http.HttpContext context, string id) =>
+{
+    var track = await spotifyService.GetTrack(id);
+    return Results.Ok(track);
 }
 );
 
