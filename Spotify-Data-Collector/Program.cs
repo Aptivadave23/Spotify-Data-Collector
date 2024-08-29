@@ -9,9 +9,15 @@ var clientSecret = Environment.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET");
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddSingleton<Spotify>();
+builder.Services.AddScoped<ISpotifyService, Spotify>();
 
 var app = builder.Build();
 
+// Initialize the Spotify client
+var serviceProvider = app.Services.CreateScope().ServiceProvider;
+var spotifyService = serviceProvider.GetRequiredService<ISpotifyService>();
+spotifyService.InitializeClientAsync().Wait();
 // Configure the HTTP request pipeline.
 
 if (app.Environment.IsDevelopment())
@@ -30,37 +36,56 @@ app.MapGet("/", () =>
 }
 );
 
-app.MapGet("/Spotify", async () =>
+app.MapGet("/Spotify", async (ISpotifyService spotify) =>
 {
-   
-Console.WriteLine(clientId + " " + clientSecret);
-    var config = SpotifyClientConfig
-        .CreateDefault()
-        .WithAuthenticator(new ClientCredentialsAuthenticator(clientId, clientSecret));
-    var request = new ClientCredentialsRequest(clientId, clientSecret);
-    var response = await new OAuthClient(config).RequestToken(request);
+    //await spotify.InitializeClientAsync();
 
-    var spotify = new SpotifyClient(config.WithToken(response.AccessToken));
-
-    var artist = await spotify.Artists.Get("0OdUWJ0sBjDrqHygGUXeCF");
-
-    return artist.Name;
+    return spotify.ToString();
 }
 );
 
-app.MapGet("/Spotify/Search/Artist/{search}", async (string search) =>
+app.MapGet("/Spotify/Search/Artist/{search}", async (Microsoft.AspNetCore.Http.HttpContext context, string search) =>
+{    
+    var artists = await spotifyService.SearchArtists(search);
+    return Results.Ok(artists.ToList());
+    
+});
+
+
+app.MapGet("/Spotify/Search/Album/{search}", async (Microsoft.AspNetCore.Http.HttpContext context, string search) =>
 {
-    var config = SpotifyClientConfig
-        .CreateDefault()
-        .WithAuthenticator(new ClientCredentialsAuthenticator(clientId, clientSecret));
-    var request = new ClientCredentialsRequest(clientId, clientSecret);
-    var response = await new OAuthClient(config).RequestToken(request);
+        var albums = await spotifyService.SearchAlbums(search);
+        return Results.Ok(albums.ToList());
+    
+});
 
-    var spotify = new SpotifyClient(config.WithToken(response.AccessToken));
+app.MapGet("/Spotify/Search/Track/{search}", async (Microsoft.AspNetCore.Http.HttpContext context, string search) =>
+{
+    var tracks = await spotifyService.SearchTracks(search);
+    return Results.Ok(tracks.ToList());
+}
+);
 
-    var searchResults = await spotify.Search.Item(new SearchRequest(SearchRequest.Types.Artist, search));
+app.MapGet("/Spotify/Album/{id}", async (Microsoft.AspNetCore.Http.HttpContext context, string id) =>
+{
+    var album = await spotifyService.GetAlbum(id);
+    return Results.Ok(album);
+}
+);
 
-    return searchResults.Artists.Items.ToList();
+
+
+app.MapGet("/Spotify/Artist/{id}", async (Microsoft.AspNetCore.Http.HttpContext context, string id) =>
+{
+    var artist = await spotifyService.GetArtist(id);
+    return Results.Ok(artist);
+}
+);
+
+app.MapGet("/Spotify/Track/{id}", async (Microsoft.AspNetCore.Http.HttpContext context, string id) =>
+{
+    var track = await spotifyService.GetTrack(id);
+    return Results.Ok(track);
 }
 );
 
