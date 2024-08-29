@@ -16,6 +16,18 @@ namespace SpotifyDataCollector
         Task InitializeClientAsync();
 
         /// <summary>
+        /// Get the client ID.
+        /// </summary>
+        /// <returns></returns>
+        string GetClientId();
+
+        /// <summary>
+        /// Get the client secret.
+        /// </summary>
+        /// <returns></returns>
+        string GetClientSecret();
+
+        /// <summary>
         /// Get artist details
         /// </summary>
         /// <param name="artistId">Spotify ID for the artist (Note:  This ID differs based on Country Code)</param>

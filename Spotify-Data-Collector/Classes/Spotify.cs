@@ -24,6 +24,22 @@ namespace SpotifyDataCollector
         private SpotifyClient spotifyClient;
 
         /// <summary>
+        /// Get the client ID.
+        /// </summary>
+        /// <returns></returns>
+        public string GetClientId()
+        {
+            return clientId;
+        }
+        /// <summary>
+        /// Get the client secret.
+        /// </summary>
+        /// <returns></returns>
+        public string GetClientSecret()
+        {
+            return clientSecret;
+        }
+        /// <summary>
         /// Initializes the Spotify client with the client ID and client secret.
         /// </summary>
         /// <returns>Returns the Spotify client.</returns>

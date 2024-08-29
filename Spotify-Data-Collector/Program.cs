@@ -1,6 +1,9 @@
 using SpotifyAPI.Web;
 using SpotifyDataCollector;
 using dotenv.net;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+
 
 
 DotEnv.Load();
@@ -41,6 +44,39 @@ app.MapGet("/Spotify", async (ISpotifyService spotify) =>
     //await spotify.InitializeClientAsync();
 
     return spotify.ToString();
+}
+);
+
+app.MapGet("/login", (HttpContext context) =>
+{
+   // Make sure "http://localhost:5543/callback" is in your application's redirect URIs!
+    var loginRequest = new LoginRequest(
+      new Uri("http://localhost:5272/redirect"), // The redirect URI where Spotify will send the authorization code
+      spotifyService.GetClientId(), // Replace with your Spotify Client ID
+      LoginRequest.ResponseType.Code
+    )
+    {
+        Scope = new[] { Scopes.PlaylistReadPrivate, Scopes.PlaylistReadCollaborative }
+    };
+    var uri = loginRequest.ToUri();
+    context.Response.Redirect(uri.ToString()); // Redirect user to Spotify login
+    return Task.CompletedTask;
+}
+);
+app.MapGet("/redirect", async (HttpContext context) =>
+{
+    var code = context.Request.Query["code"].ToString();
+    var response = await new OAuthClient().RequestToken(
+      new AuthorizationCodeTokenRequest(
+        spotifyService.GetClientId(), // Replace with your Spotify Client ID
+        spotifyService.GetClientSecret(), // Replace with your Spotify Client Secret
+        code,
+        new Uri("http://localhost:5272/redirect")
+      )
+    );
+    var spotify = new SpotifyClient(response.AccessToken);
+    var profile = await spotify.UserProfile.Current();
+    return Results.Ok(profile.DisplayName);
 }
 );
 
