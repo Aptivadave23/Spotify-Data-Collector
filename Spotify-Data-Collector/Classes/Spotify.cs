@@ -7,24 +7,26 @@ namespace SpotifyDataCollector
 {
     public class Spotify : ISpotifyService
     {
-        // Add your class members and methods here
-        private string clientId { get; set; }
-        private string clientSecret { get; set; }
-        private SpotifyClient spotifyClient;
-
+        /// <summary>
+        /// Represents a class that interacts with the Spotify API.
+        /// </summary>
         public Spotify()
         {
             // Implement constructor logic here
             clientId = Environment.GetEnvironmentVariable("SPOTIFY_CLIENT_ID");
             clientSecret = Environment.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET");
-           
         }
+
+        // Add your class members and methods here
+
+        private string clientId { get; set; }
+        private string clientSecret { get; set; }
+        private SpotifyClient spotifyClient;
+
         /// <summary>
-        /// Initializes the Spotify client with the client ID and client secret
+        /// Initializes the Spotify client with the client ID and client secret.
         /// </summary>
-        /// <returns>
-        /// Returns the Spotify client
-        /// </returns>
+        /// <returns>Returns the Spotify client.</returns>
         public async Task InitializeClientAsync()
         {
             var config = SpotifyClientConfig
@@ -35,72 +37,73 @@ namespace SpotifyDataCollector
 
             spotifyClient = new SpotifyClient(config.WithToken(response.AccessToken));
         }
+
         /// <summary>
-        /// Get artist details
+        /// Get artist details.
         /// </summary>
-        /// <param name="artistId">Spotify ID for the artist (Note:  This ID differs based on Country Code)</param>
-        /// <returns>Artist DTO</returns>
+        /// <param name="artistId">Spotify ID for the artist (Note: This ID differs based on Country Code).</param>
+        /// <returns>Artist DTO.</returns>
         public async Task<ArtistDto> GetArtist(string artistId)
         {
             var artist = await spotifyClient.Artists.Get(artistId);
-            return new ArtistDto(artist.Name, artist.Id, artist.Genres, artist.ExternalUrls["spotify"], artist.Popularity.ToString());  
+            return new ArtistDto(artist.Name, artist.Id, artist.Genres, artist.ExternalUrls["spotify"], artist.Popularity.ToString());
         }
 
         /// <summary>
-        /// Get track details
+        /// Get track details.
         /// </summary>
-        /// <param name="trackId">Spotify ID for the album (Note:  This ID differs based on Country Code)</param>
-        /// <returns>Track DTO</returns>
+        /// <param name="trackId">Spotify ID for the album (Note: This ID differs based on Country Code).</param>
+        /// <returns>Track DTO.</returns>
         public async Task<TrackDTO> GetTrack(string trackId)
         {
             var track = await spotifyClient.Tracks.Get(trackId);
             return new TrackDTO(track.Name, track.Id, track.DurationMs.ToString(), track.Popularity.ToString(), track.ExternalUrls["spotify"], track.Album.Id, track.Album.ReleaseDate, track.DiscNumber.ToString(), track.TrackNumber.ToString());
         }
 
-        
         /// <summary>
-        /// Get album details
+        /// Get album details.
         /// </summary>
-        /// <param name="albumId">Spotify ID for the album (Note:  This ID differs based on Country Code)</param>
-        /// <returns>Album DTO</returns>
+        /// <param name="albumId">Spotify ID for the album (Note: This ID differs based on Country Code).</param>
+        /// <returns>Album DTO.</returns>
         public async Task<AlbumDto> GetAlbum(string albumId)
         {
-            var album = await spotifyClient.Albums.Get(albumId, new AlbumRequest{Market = "US"});
+            var album = await spotifyClient.Albums.Get(albumId, new AlbumRequest { Market = "US" });
             return new AlbumDto(album.Name, album.Id, album.ReleaseDate, album.Images[0].Url,
                 album.AlbumType.ToString(), album.TotalTracks.ToString(), "0", album.ExternalUrls["spotify"].ToString(), album.Artists[0].Id, album.Artists[0].Name);
         }
+
         /// <summary>
-        /// Get playlist details (Not supported yet)
+        /// Get playlist details (Not supported yet).
         /// </summary>
-        /// <param name="playlistId"></param>
-        /// <returns></returns>
+        /// <param name="playlistId">Spotify ID for the playlist.</param>
+        /// <returns>FullPlaylist object.</returns>
         public async Task<FullPlaylist> GetPlaylist(string playlistId)
         {
             return await spotifyClient.Playlists.Get(playlistId);
         }
 
         /// <summary>
-        /// Get all albums for an artist
+        /// Get all albums for an artist.
         /// </summary>
-        /// <param name="artistId">Spotify ID for the artist (Note:  This is based on Country Code)</param>
-        /// <returns>List of Album DTOs</returns>
+        /// <param name="artistId">Spotify ID for the artist (Note: This is based on Country Code).</param>
+        /// <returns>List of Album DTOs.</returns>
         public async Task<List<AlbumDto>> GetArtistAlbums(string artistId)
         {
-            var pagingResult = await spotifyClient.Artists.GetAlbums(artistId, new ArtistsAlbumsRequest{Market = "US"});
+            var pagingResult = await spotifyClient.Artists.GetAlbums(artistId, new ArtistsAlbumsRequest { Market = "US" });
             var albumDTOs = pagingResult.Items.Select(album => new AlbumDto(
                 album.Name, album.Id, album.ReleaseDate, album.Images[0].Url,
                 album.AlbumType, album.TotalTracks.ToString(), "0", album.ExternalUrls.ToString(), artistId, "Artist")).ToList();
-           
+
             return albumDTOs;
         }
 
         /// <summary>
-        /// Search for an item, defaults to US market
+        /// Search for an item, defaults to US market.
         /// </summary>
-        /// <param name="query">Item(s) searching for</param>
-        /// <param name="searchType">Spotify Object Type (Album, Artist, Track, Playlist).  Non-user based objects</param>
+        /// <param name="query">Item(s) searching for.</param>
+        /// <param name="searchType">Spotify Object Type (Album, Artist, Track, Playlist). Non-user based objects.</param>
         /// <param name="market">Two letter country code for the Spotify market to search in.</param>
-        /// <returns>Search Response object</returns>
+        /// <returns>Search Response object.</returns>
         public async Task<SearchResponse> Search(string query, SearchRequest.Types searchType, string market = "US")
         {
             var searchRequest = new SearchRequest(searchType, query)
@@ -108,14 +111,14 @@ namespace SpotifyDataCollector
                 Market = market
             };
 
-            return await spotifyClient.Search.Item(searchRequest);  
+            return await spotifyClient.Search.Item(searchRequest);
         }
 
         /// <summary>
-        /// Search for albums
+        /// Search for albums.
         /// </summary>
-        /// <param name="search">Search Term</param>
-        /// <returns>List of Album DTOs</returns>
+        /// <param name="search">Search Term.</param>
+        /// <returns>List of Album DTOs.</returns>
         public async Task<List<AlbumDto>> SearchAlbums(string search)
         {
             var searchResults = await Search(search, SearchRequest.Types.Album);
@@ -124,15 +127,15 @@ namespace SpotifyDataCollector
 
             List<AlbumDto> albums = new List<AlbumDto>();
 
-            if (Albums.Count() > 0)   
+            if (Albums.Count() > 0)
             {
-            
-                foreach (var a in Albums){
+                foreach (var a in Albums)
+                {
                     var albumDetails = await GetAlbum(a.Id);
                     var albumDto = new AlbumDto(
-                        albumDetails.Name, 
-                        albumDetails.Id, 
-                        albumDetails.ReleaseDate, 
+                        albumDetails.Name,
+                        albumDetails.Id,
+                        albumDetails.ReleaseDate,
                         albumDetails.ImageUrl,
                         albumDetails.AlbumType,
                         albumDetails.TotalTracks,
@@ -140,50 +143,49 @@ namespace SpotifyDataCollector
                         albumDetails.SpotifyUrl,
                         albumDetails.ArtistId,
                         albumDetails.ArtistName
-                        );
+                    );
                     albums.Add(albumDto);
                 }
-                }
-                return albums;
-                
             }
-            /// <summary>
-            /// Search for artists
-            /// </summary>
-            /// <param name="search">Search Term</param>
-            /// <returns>LIst of Artist DTOs</returns>
-            public async Task<List<ArtistDto>> SearchArtists(string search)
-            {
-                var searchResults = await Search(search, SearchRequest.Types.Artist);
-
-                var Artists = searchResults.Artists.Items.ToList();
-
-                List<ArtistDto> artists = new List<ArtistDto>();
-
-                if (Artists.Count() > 0)   
-                {
-                
-                    foreach (var a in Artists){
-                        var artistDetails = await GetArtist(a.Id);
-                        var artistDto = new ArtistDto(
-                            artistDetails.Name, 
-                            artistDetails.SpotifyId, 
-                            artistDetails.Genres, 
-                            artistDetails.SpotifyUrl,
-                            artistDetails.Popularity.ToString()
-                            );
-                        artists.Add(artistDto);
-                    }
-                    }
-                    return artists;
-                    
-                }
+            return albums;
+        }
 
         /// <summary>
-        /// Search for tracks
+        /// Search for artists.
         /// </summary>
-        /// <param name="search">Search Term</param>
-        /// <returns>List of Track DTOs</returns>
+        /// <param name="search">Search Term.</param>
+        /// <returns>List of Artist DTOs.</returns>
+        public async Task<List<ArtistDto>> SearchArtists(string search)
+        {
+            var searchResults = await Search(search, SearchRequest.Types.Artist);
+
+            var Artists = searchResults.Artists.Items.ToList();
+
+            List<ArtistDto> artists = new List<ArtistDto>();
+
+            if (Artists.Count() > 0)
+            {
+                foreach (var a in Artists)
+                {
+                    var artistDetails = await GetArtist(a.Id);
+                    var artistDto = new ArtistDto(
+                        artistDetails.Name,
+                        artistDetails.SpotifyId,
+                        artistDetails.Genres,
+                        artistDetails.SpotifyUrl,
+                        artistDetails.Popularity.ToString()
+                    );
+                    artists.Add(artistDto);
+                }
+            }
+            return artists;
+        }
+
+        /// <summary>
+        /// Search for tracks.
+        /// </summary>
+        /// <param name="search">Search Term.</param>
+        /// <returns>List of Track DTOs.</returns>
         public async Task<List<TrackDTO>> SearchTracks(string search)
         {
             var searchResults = await Search(search, SearchRequest.Types.Track);
@@ -192,13 +194,13 @@ namespace SpotifyDataCollector
 
             List<TrackDTO> tracks = new List<TrackDTO>();
 
-            if (Tracks.Count() > 0)   
+            if (Tracks.Count() > 0)
             {
-            
-                foreach (var t in Tracks){
+                foreach (var t in Tracks)
+                {
                     var trackDetails = await GetTrack(t.Id);
                     var trackDto = new TrackDTO(
-                        trackDetails.Name, 
+                        trackDetails.Name,
                         trackDetails.SpotifyId,
                         trackDetails.Duration,
                         trackDetails.Popularity,
@@ -207,12 +209,11 @@ namespace SpotifyDataCollector
                         trackDetails.ReleaseDate,
                         trackDetails.Disc_Number,
                         trackDetails.Track_Number
-                        );
+                    );
                     tracks.Add(trackDto);
                 }
-                }
-                return tracks;
-                
             }
+            return tracks;
+        }
     }
 }
