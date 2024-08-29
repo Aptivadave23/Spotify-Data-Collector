@@ -179,6 +179,11 @@ namespace SpotifyDataCollector
                     
                 }
 
+        /// <summary>
+        /// Search for tracks
+        /// </summary>
+        /// <param name="search">Search Term</param>
+        /// <returns>List of Track DTOs</returns>
         public async Task<List<TrackDTO>> SearchTracks(string search)
         {
             var searchResults = await Search(search, SearchRequest.Types.Track);
