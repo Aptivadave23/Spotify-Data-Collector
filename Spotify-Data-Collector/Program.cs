@@ -1,4 +1,5 @@
 using SpotifyAPI.Web;
+using SpotifyUser;
 using SpotifyDataCollector;
 using dotenv.net;
 using Microsoft.AspNetCore.Builder;
@@ -14,6 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddSingleton<Spotify>();
 builder.Services.AddScoped<ISpotifyService, Spotify>();
+builder.Services.AddScoped<IUser, User>();
 
 var app = builder.Build();
 
@@ -21,6 +23,8 @@ var app = builder.Build();
 var serviceProvider = app.Services.CreateScope().ServiceProvider;
 var spotifyService = serviceProvider.GetRequiredService<ISpotifyService>();
 spotifyService.InitializeClientAsync().Wait();
+// Initialize the Spotify user
+var user = serviceProvider.GetRequiredService<IUser>();
 // Configure the HTTP request pipeline.
 
 if (app.Environment.IsDevelopment())
@@ -49,22 +53,12 @@ app.MapGet("/Spotify", async (ISpotifyService spotify) =>
 
 app.MapGet("/login", (HttpContext context) =>
 {
-   // Make sure "http://localhost:5543/callback" is in your application's redirect URIs!
-    var loginRequest = new LoginRequest(
-      new Uri("http://localhost:5272/redirect"), // The redirect URI where Spotify will send the authorization code
-      spotifyService.GetClientId(), // Replace with your Spotify Client ID
-      LoginRequest.ResponseType.Code
-    )
-    {
-        Scope = new[] { Scopes.PlaylistReadPrivate, Scopes.PlaylistReadCollaborative }
-    };
-    var uri = loginRequest.ToUri();
-    context.Response.Redirect(uri.ToString()); // Redirect user to Spotify login
-    return Task.CompletedTask;
+    return user.InitiateSpotifyLoginAsync(context);
 }
 );
 app.MapGet("/redirect", async (HttpContext context) =>
 {
+    /*
     var code = context.Request.Query["code"].ToString();
     var response = await new OAuthClient().RequestToken(
       new AuthorizationCodeTokenRequest(
@@ -74,7 +68,8 @@ app.MapGet("/redirect", async (HttpContext context) =>
         new Uri("http://localhost:5272/redirect")
       )
     );
-    var spotify = new SpotifyClient(response.AccessToken);
+    var spotify = new SpotifyClient(response.AccessToken);*/
+    var spotify = await user.GetSpotifyClientAsync(context);
     var profile = await spotify.UserProfile.Current();
     return Results.Ok(profile.DisplayName);
 }
