@@ -58,20 +58,12 @@ app.MapGet("/login", (HttpContext context) =>
 );
 app.MapGet("/redirect", async (HttpContext context) =>
 {
-    /*
-    var code = context.Request.Query["code"].ToString();
-    var response = await new OAuthClient().RequestToken(
-      new AuthorizationCodeTokenRequest(
-        spotifyService.GetClientId(), // Replace with your Spotify Client ID
-        spotifyService.GetClientSecret(), // Replace with your Spotify Client Secret
-        code,
-        new Uri("http://localhost:5272/redirect")
-      )
-    );
-    var spotify = new SpotifyClient(response.AccessToken);*/
+    
     var spotify = await user.GetSpotifyClientAsync(context);
     var profile = await spotify.UserProfile.Current();
-    return Results.Ok(profile.DisplayName);
+    user.SpotifyUserID = profile.Id;
+    var tracks = await user.GetRecentTracksAsync(spotify, null, DateTime.Now);
+    return Results.Ok(tracks.ToList());
 }
 );
 

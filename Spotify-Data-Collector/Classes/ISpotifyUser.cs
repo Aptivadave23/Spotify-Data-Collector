@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Spotify_Data_Collector;
 using SpotifyAPI.Web;
 namespace SpotifyUser{
     public interface IUser
@@ -10,6 +11,7 @@ namespace SpotifyUser{
         /// <returns></returns>
         string LoginURI { get; }
 
+        string SpotifyUserID { get; set;}
         /// <summary>
         /// Initiate the Spotify login process
         /// </summary>
@@ -23,5 +25,7 @@ namespace SpotifyUser{
         /// <param name="context"></param>
         /// <returns></returns>
         Task<SpotifyClient> GetSpotifyClientAsync(HttpContext context);
+
+        Task<List<TrackDTO>> GetRecentTracksAsync(SpotifyClient spotify, DateTimeOffset? startTime = null, DateTimeOffset? endTime = null);
     }
 }
