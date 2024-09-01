@@ -15,6 +15,8 @@ namespace SpotifyUser{
         private string _loginURI = "http://localhost:5272/redirect";
         private string _SpotifyUserID;
         private ISpotifyService _spotifyService = new Spotify();
+        private SpotifyClient _spotifyClient;
+        private DateTimeOffset _tokenExpiryTime;
         
         public string LoginURI{
             get{
@@ -28,6 +30,15 @@ namespace SpotifyUser{
             }
             set{
                 _SpotifyUserID = value;
+            }
+        }
+
+        public SpotifyClient SpotifyClient{
+            get{
+                return _spotifyClient;
+            }
+            set{
+                _spotifyClient = value;
             }
         }
 
@@ -58,7 +69,17 @@ namespace SpotifyUser{
                     new Uri(_loginURI)
                 )
             );
-            var spotify = new SpotifyClient(response.AccessToken);
+
+            _tokenExpiryTime = DateTimeOffset.Now.AddSeconds(response.ExpiresIn - 60);
+            
+            var config = SpotifyClientConfig.CreateDefault()
+                .WithAuthenticator(new AuthorizationCodeAuthenticator(
+                    _spotifyService.GetClientId(), // Replace with your Spotify Client ID
+                    _spotifyService.GetClientSecret(), // Replace with your Spotify Client Secret
+                    response
+                )
+            );
+            var spotify = new SpotifyClient(config);
             return spotify;
         }
 
@@ -87,11 +108,17 @@ namespace SpotifyUser{
                 item.Track.Album.Id,
                 item.Track.Album.ReleaseDate,
                 item.Track.DiscNumber.ToString(),
-                item.Track.TrackNumber.ToString()
+                item.Track.TrackNumber.ToString(),
+                item.Track.Artists[0].Id,
+                item.Track.Artists[0].Name
             )).ToList();
             return tracks;
         }
         
+        public bool IsTokenExpired()
+        {
+            return DateTimeOffset.Now > _tokenExpiryTime;
+        }
         
     }
 }

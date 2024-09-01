@@ -12,13 +12,15 @@ namespace SpotifyUser{
         string LoginURI { get; }
 
         string SpotifyUserID { get; set;}
+
+        SpotifyClient SpotifyClient { get; set; }
         /// <summary>
         /// Initiate the Spotify login process
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
         Task InitiateSpotifyLoginAsync(HttpContext context);
-
+        bool IsTokenExpired();
         /// <summary>
         /// Get the Spotify client
         /// </summary>

@@ -73,7 +73,7 @@ namespace SpotifyDataCollector
         public async Task<TrackDTO> GetTrack(string trackId)
         {
             var track = await spotifyClient.Tracks.Get(trackId);
-            return new TrackDTO(track.Name, track.Id, track.DurationMs.ToString(), track.Popularity.ToString(), track.ExternalUrls["spotify"], track.Album.Id, track.Album.ReleaseDate, track.DiscNumber.ToString(), track.TrackNumber.ToString());
+            return new TrackDTO(track.Name, track.Id, track.DurationMs.ToString(), track.Popularity.ToString(), track.ExternalUrls["spotify"], track.Album.Id, track.Album.ReleaseDate, track.DiscNumber.ToString(), track.TrackNumber.ToString(), track.Artists[0].Id, track.Artists[0].Name);
         }
 
         /// <summary>
@@ -224,7 +224,9 @@ namespace SpotifyDataCollector
                         trackDetails.AlbumId,
                         trackDetails.ReleaseDate,
                         trackDetails.Disc_Number,
-                        trackDetails.Track_Number
+                        trackDetails.Track_Number,
+                        trackDetails.ArtistId,
+                        trackDetails.ArtistName
                     );
                     tracks.Add(trackDto);
                 }
