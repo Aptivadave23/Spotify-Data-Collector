@@ -13,7 +13,8 @@ using System.Runtime.Serialization;
 namespace SpotifyUser{
     
     public class User: IUser{
-        private string _loginURI = "http://localhost:5272/redirect";
+        private string _loginURI = 
+            Environment.GetEnvironmentVariable("SPOTIFY_REDIRECT_URI");
         private string _SpotifyUserID;
         private ISpotifyService _spotifyService = new Spotify();
         private SpotifyClient _spotifyClient;
