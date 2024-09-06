@@ -4,6 +4,7 @@ using SpotifyDataCollector;
 using dotenv.net;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 
 
 
@@ -16,9 +17,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<Spotify>();
 builder.Services.AddScoped<ISpotifyService, Spotify>();
 builder.Services.AddScoped<IUser, User>();
-
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(Options =>
+{
+    Options.Cookie.Name = "SpotifySession";
+    Options.IdleTimeout = TimeSpan.FromMinutes(30);
+    Options.Cookie.IsEssential = true;
+    Options.Cookie.HttpOnly = true;
+});
 var app = builder.Build();
-
+app.UseSession();
 // Initialize the Spotify client
 var serviceProvider = app.Services.CreateScope().ServiceProvider;
 var spotifyService = serviceProvider.GetRequiredService<ISpotifyService>();
@@ -52,12 +60,17 @@ app.MapGet("/login", (HttpContext context) =>
 );
 app.MapGet("/redirect", async (HttpContext context) =>
 {
-    //todo: check to see if we already have the access code and token.  If we don't, get it.  Otherwise, refresh the token if needed.
+    
     var code = context.Request.Query["code"].ToString();
     await user.GetSpotifyClientAsync(code);
     var profile = await user.SpotifyClient.UserProfile.Current();
     user.SpotifyUserID = profile.Id;
-    return Results.Ok(user.TokenExpireTime);
+    if(context.Session.GetString("GoBackRoute") != null)
+    {
+        return Results.Redirect(context.Session.GetString("GoBackRoute"));
+    }
+    else
+        return Results.Ok(user.TokenExpireTime);
 }
 );
 app.MapGet("/user/RecentTracks", async (HttpContext context) =>
@@ -65,8 +78,8 @@ app.MapGet("/user/RecentTracks", async (HttpContext context) =>
     //check to see if the user has a spotify client
     if(user.SpotifyClient == null)
     {
-       await user.InitiateSpotifyLoginAsync(context);
-       user.SpotifyClient = await user.GetSpotifyClientAsync(user.SpotifyAccessCode);
+        context.Session.SetString("GoBackRoute", "/user/RecentTracks");      
+       return Results.Redirect("/login");
     }
     else if(user.IsTokenExpired())
     {
