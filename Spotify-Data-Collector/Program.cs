@@ -1,6 +1,11 @@
 using SpotifyAPI.Web;
+using SpotifyUser;
 using SpotifyDataCollector;
 using dotenv.net;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
+
 
 
 DotEnv.Load();
@@ -11,13 +16,23 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddSingleton<Spotify>();
 builder.Services.AddScoped<ISpotifyService, Spotify>();
-
+builder.Services.AddScoped<IUser, User>();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(Options =>
+{
+    Options.Cookie.Name = "SpotifySession";
+    Options.IdleTimeout = TimeSpan.FromMinutes(30);
+    Options.Cookie.IsEssential = true;
+    Options.Cookie.HttpOnly = true;
+});
 var app = builder.Build();
-
+app.UseSession();
 // Initialize the Spotify client
 var serviceProvider = app.Services.CreateScope().ServiceProvider;
 var spotifyService = serviceProvider.GetRequiredService<ISpotifyService>();
 spotifyService.InitializeClientAsync().Wait();
+// Initialize the Spotify user
+var user = serviceProvider.GetRequiredService<IUser>();
 // Configure the HTTP request pipeline.
 
 if (app.Environment.IsDevelopment())
@@ -36,6 +51,46 @@ app.MapGet("/", () =>
 }
 );
 
+
+//Spotify User Routes
+app.MapGet("/login", (HttpContext context) =>
+{
+    return user.InitiateSpotifyLoginAsync(context);
+}
+);
+app.MapGet("/redirect", async (HttpContext context) =>
+{
+    
+    var code = context.Request.Query["code"].ToString();
+    await user.GetSpotifyClientAsync(code);
+    var profile = await user.SpotifyClient.UserProfile.Current();
+    user.SpotifyUserID = profile.Id;
+    if(context.Session.GetString("GoBackRoute") != null)
+    {
+        return Results.Redirect(context.Session.GetString("GoBackRoute"));
+    }
+    else
+        return Results.Ok(user.TokenExpireTime);
+}
+);
+app.MapGet("/user/RecentTracks", async (HttpContext context) =>
+{
+    //check to see if the user has a spotify client
+    if(user.SpotifyClient == null)
+    {
+        context.Session.SetString("GoBackRoute", "/user/RecentTracks");      
+       return Results.Redirect("/login");
+    }
+    else if(user.IsTokenExpired())
+    {
+        await user.RefreshTokenAsync();
+    }
+    var tracks = await user.GetRecentTracksAsync(user.SpotifyClient, null, DateTime.Now);
+    return Results.Ok(tracks.ToList());
+}
+);
+
+//Spotify Data Collection Routes
 app.MapGet("/Spotify", async (ISpotifyService spotify) =>
 {
     //await spotify.InitializeClientAsync();
@@ -58,6 +113,8 @@ app.MapGet("/Spotify/Search/Album/{search}", async (Microsoft.AspNetCore.Http.Ht
         return Results.Ok(albums.ToList());
     
 });
+
+
 
 app.MapGet("/Spotify/Search/Track/{search}", async (Microsoft.AspNetCore.Http.HttpContext context, string search) =>
 {

@@ -17,7 +17,10 @@ namespace Spotify_Data_Collector{
         public string Disc_Number { get; set; }
         public string Track_Number { get; set; }
 
-        public TrackDTO(string name, string spotifyId, string duration, string popularity, string spotifyUrl, string albumId, string releaseDate, string disc_Number, string track_Number)
+        public string ArtistId { get; set; }
+        public string ArtistName { get; set; }
+
+        public TrackDTO(string name, string spotifyId, string duration, string popularity, string spotifyUrl, string albumId, string releaseDate, string disc_Number, string track_Number, string artistId, string artistName)
         {
             Name = name;
             SpotifyId = spotifyId;
@@ -28,6 +31,9 @@ namespace Spotify_Data_Collector{
             ReleaseDate = releaseDate;
             Disc_Number = disc_Number;
             Track_Number = track_Number;
+            ArtistId = artistId;
+            ArtistName = artistName;
         }
+        
     }
 }
