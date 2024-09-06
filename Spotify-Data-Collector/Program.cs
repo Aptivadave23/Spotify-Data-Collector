@@ -52,12 +52,12 @@ app.MapGet("/login", (HttpContext context) =>
 );
 app.MapGet("/redirect", async (HttpContext context) =>
 {
-    
-    user.SpotifyClient = await user.GetSpotifyClientAsync(context);
+    //todo: check to see if we already have the access code and token.  If we don't, get it.  Otherwise, refresh the token if needed.
+    var code = context.Request.Query["code"].ToString();
+    await user.GetSpotifyClientAsync(code);
     var profile = await user.SpotifyClient.UserProfile.Current();
     user.SpotifyUserID = profile.Id;
-    
-    return Results.Ok(profile.DisplayName);
+    return Results.Ok(user.TokenExpireTime);
 }
 );
 app.MapGet("/user/RecentTracks", async (HttpContext context) =>
@@ -66,11 +66,11 @@ app.MapGet("/user/RecentTracks", async (HttpContext context) =>
     if(user.SpotifyClient == null)
     {
        await user.InitiateSpotifyLoginAsync(context);
-       user.SpotifyClient = await user.GetSpotifyClientAsync(context);
+       user.SpotifyClient = await user.GetSpotifyClientAsync(user.SpotifyAccessCode);
     }
-    else if(!user.IsTokenExpired())
+    else if(user.IsTokenExpired())
     {
-        user.SpotifyClient = await user.GetSpotifyClientAsync(context);
+        await user.RefreshTokenAsync();
     }
     var tracks = await user.GetRecentTracksAsync(user.SpotifyClient, null, DateTime.Now);
     return Results.Ok(tracks.ToList());

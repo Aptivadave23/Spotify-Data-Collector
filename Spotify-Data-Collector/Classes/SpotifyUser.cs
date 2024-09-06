@@ -8,6 +8,7 @@ using SpotifyAPI.Web;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Builder;
 using Spotify_Data_Collector;
+using System.Runtime.Serialization;
 
 namespace SpotifyUser{
     
@@ -17,7 +18,9 @@ namespace SpotifyUser{
         private ISpotifyService _spotifyService = new Spotify();
         private SpotifyClient _spotifyClient;
         private DateTimeOffset _tokenExpiryTime;
-        
+        private string _spotifyToken;
+        private string _spotifyAccessCode;
+        private string _tokenExpireTime;
         public string LoginURI{
             get{
                 return _loginURI;
@@ -33,6 +36,15 @@ namespace SpotifyUser{
             }
         }
 
+        public string TokenExpireTime{
+            get{
+                return _tokenExpireTime;
+            }
+            set{
+                _tokenExpireTime = value;
+            }
+        }
+
         public SpotifyClient SpotifyClient{
             get{
                 return _spotifyClient;
@@ -42,6 +54,23 @@ namespace SpotifyUser{
             }
         }
 
+        public string SpotifyToken{
+            get{
+                return _spotifyToken;
+            }
+            set{
+                _spotifyToken = value;
+            }
+        }
+
+        public string SpotifyAccessCode{
+            get{
+                return _spotifyAccessCode;
+            }
+            set{
+                _spotifyAccessCode = value;
+            }
+        }
 
         public Task InitiateSpotifyLoginAsync(HttpContext context)
         {
@@ -58,20 +87,20 @@ namespace SpotifyUser{
             return Task.CompletedTask;
         }
 
-        public async Task<SpotifyClient> GetSpotifyClientAsync(HttpContext context)
-        {
-            var code = context.Request.Query["code"].ToString();
+        public async Task<SpotifyClient> GetSpotifyClientAsync(string code)
+        {           
+            SpotifyAccessCode = code;
             var response = await new OAuthClient().RequestToken(
                 new AuthorizationCodeTokenRequest(
                     _spotifyService.GetClientId(), // Replace with your Spotify Client ID
                     _spotifyService.GetClientSecret(), // Replace with your Spotify Client Secret
-                    code,
+                    SpotifyAccessCode,
                     new Uri(_loginURI)
                 )
             );
 
             _tokenExpiryTime = DateTimeOffset.Now.AddSeconds(response.ExpiresIn - 60);
-            
+
             var config = SpotifyClientConfig.CreateDefault()
                 .WithAuthenticator(new AuthorizationCodeAuthenticator(
                     _spotifyService.GetClientId(), // Replace with your Spotify Client ID
@@ -79,10 +108,29 @@ namespace SpotifyUser{
                     response
                 )
             );
-            var spotify = new SpotifyClient(config);
-            return spotify;
+            this.SpotifyClient = new SpotifyClient(config);
+            this.SpotifyToken = response.RefreshToken;            
+            this.TokenExpireTime = DateTime.Now.AddSeconds(response.ExpiresIn).ToString();
+            return this.SpotifyClient;
+        
         }
 
+        public async Task RefreshTokenAsync()
+        {
+            var response = await new OAuthClient().RequestToken(
+                new AuthorizationCodeRefreshRequest(
+                    _spotifyService.GetClientId(), // Replace with your Spotify Client ID
+                    _spotifyService.GetClientSecret(), // Replace with your Spotify Client Secret
+                    _spotifyToken
+                )
+            );
+            _tokenExpiryTime = DateTimeOffset.Now.AddSeconds(response.ExpiresIn - 60);
+            SpotifyClient = new SpotifyClient(response.AccessToken);
+            SpotifyToken = response.RefreshToken;
+            TokenExpireTime = DateTime.Now.AddSeconds(response.ExpiresIn).ToString();
+            await Task.CompletedTask;
+        }
+        
         public async Task<List<TrackDTO>> GetRecentTracksAsync(SpotifyClient spotify, DateTimeOffset? startTime = null, DateTimeOffset? endTime = null)
         {
             var recentlyPlayedRequest = new PlayerRecentlyPlayedRequest()
@@ -116,8 +164,8 @@ namespace SpotifyUser{
         }
         
         public bool IsTokenExpired()
-        {
-            return DateTimeOffset.Now > _tokenExpiryTime;
+        {;
+            return DateTime.Now > DateTime.Parse(TokenExpireTime) - TimeSpan.FromSeconds(60);
         }
         
     }
