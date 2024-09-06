@@ -17,7 +17,6 @@ namespace SpotifyUser{
         private string _SpotifyUserID;
         private ISpotifyService _spotifyService = new Spotify();
         private SpotifyClient _spotifyClient;
-        private DateTimeOffset _tokenExpiryTime;
         private string _spotifyToken;
         private string _spotifyAccessCode;
         private string _tokenExpireTime;
@@ -99,8 +98,6 @@ namespace SpotifyUser{
                 )
             );
 
-            _tokenExpiryTime = DateTimeOffset.Now.AddSeconds(response.ExpiresIn - 60);
-
             var config = SpotifyClientConfig.CreateDefault()
                 .WithAuthenticator(new AuthorizationCodeAuthenticator(
                     _spotifyService.GetClientId(), // Replace with your Spotify Client ID
@@ -108,10 +105,10 @@ namespace SpotifyUser{
                     response
                 )
             );
-            this.SpotifyClient = new SpotifyClient(config);
-            this.SpotifyToken = response.RefreshToken;            
-            this.TokenExpireTime = DateTime.Now.AddSeconds(response.ExpiresIn).ToString();
-            return this.SpotifyClient;
+            SpotifyClient = new SpotifyClient(config);
+            SpotifyToken = response.RefreshToken;            
+            TokenExpireTime = DateTime.Now.AddSeconds(response.ExpiresIn).ToString();
+            return SpotifyClient;
         
         }
 
@@ -124,13 +121,20 @@ namespace SpotifyUser{
                     _spotifyToken
                 )
             );
-            _tokenExpiryTime = DateTimeOffset.Now.AddSeconds(response.ExpiresIn - 60);
+            
             SpotifyClient = new SpotifyClient(response.AccessToken);
             SpotifyToken = response.RefreshToken;
             TokenExpireTime = DateTime.Now.AddSeconds(response.ExpiresIn).ToString();
             await Task.CompletedTask;
         }
         
+        /// <summary>
+        /// Retrieves a list of recent tracks from the Spotify API.
+        /// </summary>
+        /// <param name="spotify">The SpotifyClient instance used to make API requests.</param>
+        /// <param name="startTime">Optional. The start time to filter the recent tracks. Defaults to null.</param>
+        /// <param name="endTime">Optional. The end time to filter the recent tracks. Defaults to null.</param>
+        /// <returns>A list of TrackDTO objects representing the recent tracks.</returns>
         public async Task<List<TrackDTO>> GetRecentTracksAsync(SpotifyClient spotify, DateTimeOffset? startTime = null, DateTimeOffset? endTime = null)
         {
             var recentlyPlayedRequest = new PlayerRecentlyPlayedRequest()
@@ -163,8 +167,14 @@ namespace SpotifyUser{
             return tracks;
         }
         
+        /// <summary>
+        /// Check if the token will expire in the next minute
+        /// </summary>
+        /// <returns>
+        /// True if the token will expire in the next minute, false otherwise
+        /// </returns>
         public bool IsTokenExpired()
-        {;
+        {
             return DateTime.Now > DateTime.Parse(TokenExpireTime) - TimeSpan.FromSeconds(60);
         }
         
