@@ -35,6 +35,6 @@ namespace SpotifyUser{
         /// <returns></returns>
         Task<SpotifyClient> GetSpotifyClientAsync(string code);
 
-        Task<List<TrackDTO>> GetRecentTracksAsync(SpotifyClient spotify, DateTimeOffset? startTime = null, DateTimeOffset? endTime = null);
+        Task<List<TrackDTO>> GetRecentTracksAsync(SpotifyClient spotify, DateTimeOffset? startTime = null, DateTimeOffset? endTime = null, int trackCount = 10);
     }
 }

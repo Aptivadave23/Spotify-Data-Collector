@@ -136,11 +136,11 @@ namespace SpotifyUser{
         /// <param name="startTime">Optional. The start time to filter the recent tracks. Defaults to null.</param>
         /// <param name="endTime">Optional. The end time to filter the recent tracks. Defaults to null.</param>
         /// <returns>A list of TrackDTO objects representing the recent tracks.</returns>
-        public async Task<List<TrackDTO>> GetRecentTracksAsync(SpotifyClient spotify, DateTimeOffset? startTime = null, DateTimeOffset? endTime = null)
+        public async Task<List<TrackDTO>> GetRecentTracksAsync(SpotifyClient spotify, DateTimeOffset? startTime = null, DateTimeOffset? endTime = null, int trackCount = 10)
         {
             var recentlyPlayedRequest = new PlayerRecentlyPlayedRequest()
             {
-                Limit = 10 // Replace with the desired number of recent tracks to retrieve
+                Limit = trackCount // Replace with the desired number of recent tracks to retrieve
             };
              // Convert startTime and endTime to milliseconds since Unix epoch if they are not null
             if (startTime.HasValue)

@@ -73,22 +73,41 @@ app.MapGet("/redirect", async (HttpContext context) =>
         return Results.Ok(user.TokenExpireTime);
 }
 );
-app.MapGet("/user/RecentTracks", async (HttpContext context) =>
+app.MapGet("/user/RecentTracks/{trackCount?}", async (HttpContext context) =>
 {
-    //check to see if the user has a spotify client
-    if(user.SpotifyClient == null)
+    // Check to see if the user has a Spotify client
+    if (user.SpotifyClient == null)
     {
-        context.Session.SetString("GoBackRoute", "/user/RecentTracks");      
-       return Results.Redirect("/login");
+        // Combine the request path and query string to capture the full route
+        var fullRoute = $"{context.Request.Path}{context.Request.QueryString}";
+
+        // Set the GoBackRoute session variable to the full route
+        context.Session.SetString("GoBackRoute", fullRoute);   
+        return Results.Redirect("/login");
     }
-    else if(user.IsTokenExpired())
+    else if (user.IsTokenExpired())
     {
         await user.RefreshTokenAsync();
     }
-    var tracks = await user.GetRecentTracksAsync(user.SpotifyClient, null, DateTime.Now);
-    return Results.Ok(tracks.ToList());
-}
-);
+
+    // Attempt to parse trackCount, default to 10 if parsing fails or if value is not positive
+    var trackCountStr = context.Request.RouteValues["trackCount"]?.ToString() ?? "10";
+    if (!Int16.TryParse(trackCountStr, out short trackCount) || trackCount <= 0)
+    {
+        trackCount = 10;
+    }
+    else if (trackCount > 50)
+        return Results.BadRequest("Track count must be less than or equal to 50");
+
+
+    var tracks = await user.GetRecentTracksAsync(user.SpotifyClient, null, DateTime.Now, trackCount);
+    if ((tracks == null) || (tracks.Count == 0))
+    {
+        return Results.BadRequest("No tracks found");
+    }
+    else
+        return Results.Ok(tracks.ToList());
+});
 
 //Spotify Data Collection Routes
 app.MapGet("/Spotify", async (ISpotifyService spotify) =>
