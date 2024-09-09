@@ -14,7 +14,7 @@ If you see something missing from the API, there's a good chance I haven't thoug
 - To register your Spotify account with the API, hit the ```/login``` route. You'll only need to hit this once to register your account with the API.  
 - Routes that begin with ```/Spotify``` are spotify data routes, and do not require authentication.  Use these routes to search for artists, albums, songs, etc.
 - Routes that begin with ```/user``` are user specific routes, and require authentication.  
-    - currently the only user route is ```/user/recenttracks```, which will return the last 10 songs played by the authenticated user.
+    - currently the only user route is ```/user/recenttracks/{trackCount}```, which will return a list of songs played by the authenticated user based on the track count value (can't be greater than 50, defaults to 10).
 
 
 This API heavily utilizes JohnnyCrazy's SPotifyAPI-Net library (https://github.com/JohnnyCrazy/SpotifyAPI-NET).  
