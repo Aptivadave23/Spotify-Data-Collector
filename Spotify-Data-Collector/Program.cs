@@ -25,6 +25,11 @@ builder.Services.AddSession(Options =>
     Options.Cookie.IsEssential = true;
     Options.Cookie.HttpOnly = true;
 });
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo() { Title = "SpotifyAPI", Version = "v1" });
+});
 var app = builder.Build();
 app.UseSession();
 // Initialize the Spotify client
@@ -39,15 +44,19 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseStaticFiles();
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "SpotifyAPI v1");
+        c.RoutePrefix = string.Empty;
+    });
 }
 
 
 //hello world route
 app.MapGet("/", () =>
 {
-    Console.WriteLine("Route Hit");
     
-    return clientId.ToString();
 }
 );
 
