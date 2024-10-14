@@ -1,40 +1,29 @@
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Spotify_Data_Collector;
 using SpotifyAPI.Web;
-namespace SpotifyUser{
+using Spotify_Data_Collector;
+
+namespace SpotifyUser
+{
     public interface IUser
     {
-        /// <summary>
-        /// Get the login URI
-        /// </summary>
-        /// <returns></returns>
+        // Properties
         string LoginURI { get; }
-
-        string SpotifyUserID { get; set;}
-
+        string SpotifyUserID { get; set; }
         SpotifyClient SpotifyClient { get; set; }
-
         string SpotifyToken { get; set; }
-
         string TokenExpireTime { get; set; }
-
         string SpotifyAccessCode { get; set; }
-        /// <summary>
-        /// Initiate the Spotify login process
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
+
+        // Methods
         Task InitiateSpotifyLoginAsync(HttpContext context);
+        Task<SpotifyClient> GetSpotifyClientAsync(string code);
         Task RefreshTokenAsync();
         bool IsTokenExpired();
-        /// <summary>
-        /// Get the Spotify client
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        Task<SpotifyClient> GetSpotifyClientAsync(string code);
 
-        Task<List<TrackDTO>> GetRecentTracksAsync(SpotifyClient spotify, DateTimeOffset? startTime = null, DateTimeOffset? endTime = null, int trackCount = 10);
+        // Remove SpotifyClient parameter since it's already a property
+        Task<List<TrackDTO>> GetRecentTracksAsync(DateTimeOffset? startTime = null, DateTimeOffset? endTime = null, int trackCount = 10);
     }
 }

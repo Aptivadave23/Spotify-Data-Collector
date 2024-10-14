@@ -8,8 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Carter" Version="8.2.1" />
     <PackageReference Include="dotenv.net" Version="3.2.0" />
     <PackageReference Include="SpotifyAPI.web" Version="7.1.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.8.1" />
   </ItemGroup>
 
 </Project>

@@ -5,7 +5,7 @@
     "anonymousAuthentication": true,
     "iisExpress": {
       "applicationUrl": "http://localhost:43755",
-      "sslPort": 0
+      "sslPort": 44339 
     }
   },
   "profiles": {
@@ -14,7 +14,7 @@
       "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "spotify",
-      "applicationUrl": "http://localhost:5272",
+      "applicationUrl": "http://localhost:5272;https://localhost:5273", 
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

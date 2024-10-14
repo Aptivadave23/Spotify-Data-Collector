@@ -1,99 +1,95 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using Microsoft.AspNetCore.Identity.Data;
-using SpotifyDataCollector;
-using SpotifyAPI.Web;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Builder;
+using SpotifyAPI.Web;
+using SpotifyDataCollector;
 using Spotify_Data_Collector;
-using System.Runtime.Serialization;
 
-namespace SpotifyUser{
-    
-    public class User: IUser{
-        private string _loginURI = 
-            Environment.GetEnvironmentVariable("SPOTIFY_REDIRECT_URI");
-        private string _SpotifyUserID;
-        private ISpotifyService _spotifyService = new Spotify();
+namespace SpotifyUser
+{
+    public class User : IUser
+    {
+        private readonly ISpotifyService _spotifyService;
+        private readonly string _loginURI;
+        private string _spotifyUserID;
         private SpotifyClient _spotifyClient;
         private string _spotifyToken;
         private string _spotifyAccessCode;
         private string _tokenExpireTime;
-        public string LoginURI{
-            get{
-                return _loginURI;
-            }
+
+        // Constructor to initialize the User with injected dependencies
+        public User(ISpotifyService spotifyService)
+        {
+            _spotifyService = spotifyService ?? throw new ArgumentNullException(nameof(spotifyService));
+            _loginURI = Environment.GetEnvironmentVariable("SPOTIFY_REDIRECT_URI") ?? throw new ArgumentNullException("SPOTIFY_REDIRECT_URI not found");
         }
 
-        public string SpotifyUserID{
-            get{
-                return _SpotifyUserID;
-            }
-            set{
-                _SpotifyUserID = value;
-            }
+        // Properties
+        public string LoginURI => _loginURI;
+
+        public string SpotifyUserID
+        {
+            get => _spotifyUserID;
+            set => _spotifyUserID = value;
         }
 
-        public string TokenExpireTime{
-            get{
-                return _tokenExpireTime;
-            }
-            set{
-                _tokenExpireTime = value;
-            }
+        public string TokenExpireTime
+        {
+            get => _tokenExpireTime;
+            set => _tokenExpireTime = value;
         }
 
-        public SpotifyClient SpotifyClient{
-            get{
-                return _spotifyClient;
-            }
-            set{
-                _spotifyClient = value;
-            }
+        public SpotifyClient SpotifyClient
+        {
+            get => _spotifyClient;
+            set => _spotifyClient = value;
         }
 
-        public string SpotifyToken{
-            get{
-                return _spotifyToken;
-            }
-            set{
-                _spotifyToken = value;
-            }
+        public string SpotifyToken
+        {
+            get => _spotifyToken;
+            set => _spotifyToken = value;
         }
 
-        public string SpotifyAccessCode{
-            get{
-                return _spotifyAccessCode;
-            }
-            set{
-                _spotifyAccessCode = value;
-            }
+        public string SpotifyAccessCode
+        {
+            get => _spotifyAccessCode;
+            set => _spotifyAccessCode = value;
         }
 
+        // Method to initiate Spotify login
         public Task InitiateSpotifyLoginAsync(HttpContext context)
         {
-            var loginRequest = new SpotifyAPI.Web.LoginRequest(
+            var loginRequest = new LoginRequest(
                 new Uri(_loginURI),
                 _spotifyService.GetClientId(),
-                SpotifyAPI.Web.LoginRequest.ResponseType.Code
+                LoginRequest.ResponseType.Code
             )
             {
-                Scope = new[] { Scopes.PlaylistReadPrivate, Scopes.PlaylistReadCollaborative, Scopes.UserLibraryRead, Scopes.UserReadRecentlyPlayed, Scopes.UserTopRead }
+                Scope = new[] {
+                    Scopes.PlaylistReadPrivate,
+                    Scopes.PlaylistReadCollaborative,
+                    Scopes.UserLibraryRead,
+                    Scopes.UserReadRecentlyPlayed,
+                    Scopes.UserTopRead
+                }
             };
+
             var uri = loginRequest.ToUri();
             context.Response.Redirect(uri.ToString());
             return Task.CompletedTask;
         }
 
+        // Method to get the Spotify client asynchronously
         public async Task<SpotifyClient> GetSpotifyClientAsync(string code)
-        {           
+        {
             SpotifyAccessCode = code;
             var response = await new OAuthClient().RequestToken(
                 new AuthorizationCodeTokenRequest(
-                    _spotifyService.GetClientId(), // Replace with your Spotify Client ID
-                    _spotifyService.GetClientSecret(), // Replace with your Spotify Client Secret
+                    _spotifyService.GetClientId(),
+                    _spotifyService.GetClientSecret(),
                     SpotifyAccessCode,
                     new Uri(_loginURI)
                 )
@@ -101,48 +97,44 @@ namespace SpotifyUser{
 
             var config = SpotifyClientConfig.CreateDefault()
                 .WithAuthenticator(new AuthorizationCodeAuthenticator(
-                    _spotifyService.GetClientId(), // Replace with your Spotify Client ID
-                    _spotifyService.GetClientSecret(), // Replace with your Spotify Client Secret
+                    _spotifyService.GetClientId(),
+                    _spotifyService.GetClientSecret(),
                     response
-                )
-            );
+                ));
+
             SpotifyClient = new SpotifyClient(config);
-            SpotifyToken = response.RefreshToken;            
+            SpotifyToken = response.RefreshToken;
             TokenExpireTime = DateTime.Now.AddSeconds(response.ExpiresIn).ToString();
+
             return SpotifyClient;
-        
         }
 
+        // Method to refresh the Spotify token
         public async Task RefreshTokenAsync()
         {
             var response = await new OAuthClient().RequestToken(
                 new AuthorizationCodeRefreshRequest(
-                    _spotifyService.GetClientId(), // Replace with your Spotify Client ID
-                    _spotifyService.GetClientSecret(), // Replace with your Spotify Client Secret
+                    _spotifyService.GetClientId(),
+                    _spotifyService.GetClientSecret(),
                     _spotifyToken
                 )
             );
-            
+
             SpotifyClient = new SpotifyClient(response.AccessToken);
             SpotifyToken = response.RefreshToken;
             TokenExpireTime = DateTime.Now.AddSeconds(response.ExpiresIn).ToString();
-            await Task.CompletedTask;
         }
-        
-        /// <summary>
-        /// Retrieves a list of recent tracks from the Spotify API.
-        /// </summary>
-        /// <param name="spotify">The SpotifyClient instance used to make API requests.</param>
-        /// <param name="startTime">Optional. The start time to filter the recent tracks. Defaults to null.</param>
-        /// <param name="endTime">Optional. The end time to filter the recent tracks. Defaults to null.</param>
-        /// <returns>A list of TrackDTO objects representing the recent tracks.</returns>
-        public async Task<List<TrackDTO>> GetRecentTracksAsync(SpotifyClient spotify, DateTimeOffset? startTime = null, DateTimeOffset? endTime = null, int trackCount = 10)
+
+        // Method to get recent tracks from Spotify
+        public async Task<List<TrackDTO>> GetRecentTracksAsync(DateTimeOffset? startTime = null, DateTimeOffset? endTime = null, int trackCount = 10)
         {
-            var recentlyPlayedRequest = new PlayerRecentlyPlayedRequest()
+            var spotify = SpotifyClient; // Use the SpotifyClient property instead of passing it in
+            var recentlyPlayedRequest = new PlayerRecentlyPlayedRequest
             {
-                Limit = trackCount // Replace with the desired number of recent tracks to retrieve
+                Limit = trackCount
             };
-             // Convert startTime and endTime to milliseconds since Unix epoch if they are not null
+
+            // Convert startTime and endTime to milliseconds since Unix epoch if they are not null
             if (startTime.HasValue)
             {
                 recentlyPlayedRequest.After = (long)(startTime.Value - new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero)).TotalMilliseconds;
@@ -151,6 +143,7 @@ namespace SpotifyUser{
             {
                 recentlyPlayedRequest.Before = (long)(endTime.Value - new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero)).TotalMilliseconds;
             }
+
             var recentlyPlayed = await spotify.Player.GetRecentlyPlayed(recentlyPlayedRequest);
             var tracks = recentlyPlayed.Items.Select(item => new TrackDTO(
                 item.Track.Name,
@@ -165,19 +158,14 @@ namespace SpotifyUser{
                 item.Track.Artists[0].Id,
                 item.Track.Artists[0].Name
             )).ToList();
+
             return tracks;
         }
-        
-        /// <summary>
-        /// Check if the token will expire in the next minute
-        /// </summary>
-        /// <returns>
-        /// True if the token will expire in the next minute, false otherwise
-        /// </returns>
+
+        // Method to check if the token is expiring in the next minute
         public bool IsTokenExpired()
         {
             return DateTime.Now > DateTime.Parse(TokenExpireTime) - TimeSpan.FromSeconds(60);
         }
-        
     }
 }
