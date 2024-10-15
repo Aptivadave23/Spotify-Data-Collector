@@ -22,8 +22,9 @@ public class UserEndPoints : ICarterModule
                 var fullRoute = $"{context.Request.Path}{context.Request.QueryString}";
 
                 // Set the GoBackRoute session variable to the full route
-                context.Session.SetString("GoBackRoute", fullRoute);   
-                return Results.Redirect("/login");
+                context.Session.SetString("GoBackRoute", fullRoute);  
+                await user.InitiateSpotifyLoginAsync(context);
+                await user.GetSpotifyClientAsync(user.SpotifyAccessCode);
             }
             else if (user.IsTokenExpired())
             {

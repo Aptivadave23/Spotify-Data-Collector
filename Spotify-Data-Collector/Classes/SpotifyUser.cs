@@ -85,7 +85,7 @@ namespace SpotifyUser
         // Method to get the Spotify client asynchronously
         public async Task<SpotifyClient> GetSpotifyClientAsync(string code)
         {
-            SpotifyAccessCode = code;
+            //SpotifyAccessCode = code;
             var response = await new OAuthClient().RequestToken(
                 new AuthorizationCodeTokenRequest(
                     _spotifyService.GetClientId(),
