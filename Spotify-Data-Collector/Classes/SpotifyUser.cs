@@ -24,6 +24,8 @@ namespace SpotifyUser
         {
             _spotifyService = spotifyService ?? throw new ArgumentNullException(nameof(spotifyService));
             _loginURI = Environment.GetEnvironmentVariable("SPOTIFY_REDIRECT_URI") ?? throw new ArgumentNullException("SPOTIFY_REDIRECT_URI not found");
+            _spotifyAccessCode = Environment.GetEnvironmentVariable("SPOTIFY_CODE") ?? throw new ArgumentNullException("SPOTIFY_ACCESS_CODE not found");
+            _spotifyToken = Environment.GetEnvironmentVariable("SPOTIFY_TOKEN") ?? throw new ArgumentNullException("SPOTIFY_TOKEN not found");
         }
 
         // Properties
@@ -85,7 +87,7 @@ namespace SpotifyUser
         // Method to get the Spotify client asynchronously
         public async Task<SpotifyClient> GetSpotifyClientAsync(string code)
         {
-            //SpotifyAccessCode = code;
+            SpotifyAccessCode = code;
             var response = await new OAuthClient().RequestToken(
                 new AuthorizationCodeTokenRequest(
                     _spotifyService.GetClientId(),

@@ -86,12 +86,12 @@ app.MapGet("/", () =>
 .WithDisplayName("Test Route");
 
 // Spotify User Routes
-app.MapGet("/login", (HttpContext context) =>
+app.MapGet("/login", (HttpContext context, IUser user) =>
 {
     return user.InitiateSpotifyLoginAsync(context);
 });
 
-app.MapGet("/redirect", async (HttpContext context) =>
+app.MapGet("/redirect", async (HttpContext context, IUser user) =>
 {
    var code = context.Request.Query["code"].ToString();
     if (string.IsNullOrEmpty(code))
@@ -108,7 +108,8 @@ app.MapGet("/redirect", async (HttpContext context) =>
     // Retrieve the user profile
     var profile = await user.SpotifyClient.UserProfile.Current();
     user.SpotifyUserID = profile.Id;
-    return Results.Ok(new { TokenExpireTime = user.TokenExpireTime });
+    return Results.Ok(user.SpotifyUserID + ", " + user.SpotifyToken);
+    //return Results.Ok(new { TokenExpireTime = user.TokenExpireTime });
     // Retrieve and clear the session variable for GoBackRoute
     /*var goBackRoute = context.Session.GetString("GoBackRoute");
 

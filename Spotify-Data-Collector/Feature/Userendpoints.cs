@@ -9,28 +9,19 @@ public class UserEndPoints : ICarterModule
     // Remove the constructor-level dependency injection
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/user/RecentTracks/{trackCount:int?}", async (HttpContext context, int? trackCount) =>
+        app.MapGet("/user/RecentTracks/{trackCount:int?}", async (HttpContext context, int? trackCount, IUser user) =>
         {
             // Access the IUser instance from the request's service provider (dependency injection)
-            var user = context.RequestServices.GetRequiredService<IUser>();
-            
+            //var user = context.RequestServices.GetRequiredService<IUser>();
+           
             // Check if the SpotifyClient is initialized
              // Check to see if the user has a Spotify client
-            if (user.SpotifyClient == null)
+            if ((user.SpotifyClient == null) || (user.IsTokenExpired()))
             {
-                // Combine the request path and query string to capture the full route
-                var fullRoute = $"{context.Request.Path}{context.Request.QueryString}";
-
-                // Set the GoBackRoute session variable to the full route
-                context.Session.SetString("GoBackRoute", fullRoute);  
-                await user.InitiateSpotifyLoginAsync(context);
-                await user.GetSpotifyClientAsync(user.SpotifyAccessCode);
-            }
-            else if (user.IsTokenExpired())
-            {
-                // Refresh the token if it's expired
                 await user.RefreshTokenAsync();
             }
+
+            
 
 
             // Here, call the method that uses the SpotifyClient, for example:
