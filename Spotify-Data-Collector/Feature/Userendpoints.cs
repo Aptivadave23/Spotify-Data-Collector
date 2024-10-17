@@ -26,7 +26,7 @@ public class UserEndPoints : ICarterModule
 
             // Here, call the method that uses the SpotifyClient, for example:
             // Fetch recent tracks, with a default of 10 tracks if not specified
-            var recentTracks = await user.GetRecentTracksAsync(trackCount: trackCount ?? 10);
+            var recentTracks = await user.GetRecentTracksAsync(null, DateTime.Now,trackCount: trackCount ?? 10);
 
             return Results.Ok(recentTracks);
         })

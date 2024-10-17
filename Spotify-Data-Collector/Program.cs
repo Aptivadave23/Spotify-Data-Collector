@@ -85,48 +85,6 @@ app.MapGet("/", () =>
 .WithTags(new string[] { "Test", "Service" })
 .WithDisplayName("Test Route");
 
-// Spotify User Routes
-app.MapGet("/login", (HttpContext context, IUser user) =>
-{
-    return user.InitiateSpotifyLoginAsync(context);
-});
-
-app.MapGet("/redirect", async (HttpContext context, IUser user) =>
-{
-   var code = context.Request.Query["code"].ToString();
-    if (string.IsNullOrEmpty(code))
-    {
-        // Handle the missing or empty 'code' query parameter.
-        // For example, return an error response to the client.
-        return Results.BadRequest("The 'code' query parameter is required and cannot be empty.");
-    }
-    user.SpotifyAccessCode = code;
-
-    // Retrieve the Spotify client using the provided code
-    await user.GetSpotifyClientAsync(user.SpotifyAccessCode);
-    
-    // Retrieve the user profile
-    var profile = await user.SpotifyClient.UserProfile.Current();
-    user.SpotifyUserID = profile.Id;
-    return Results.Ok(user.SpotifyUserID + ", " + user.SpotifyToken);
-    //return Results.Ok(new { TokenExpireTime = user.TokenExpireTime });
-    // Retrieve and clear the session variable for GoBackRoute
-    /*var goBackRoute = context.Session.GetString("GoBackRoute");
-
-    if (!string.IsNullOrEmpty(goBackRoute))
-    {
-        // Clear the GoBackRoute session variable to avoid future redirects
-        context.Session.Remove("GoBackRoute");
-
-        // Redirect to the original route that the user wanted to access
-        return Results.Redirect(goBackRoute);
-    }
-    else
-    {
-        // Default response if no GoBackRoute is set (for example, after a login without a specific route request)
-        return Results.Ok(new { TokenExpireTime = user.TokenExpireTime });
-    }*/
-});
 
 
 // Spotify Data Collection Routes
