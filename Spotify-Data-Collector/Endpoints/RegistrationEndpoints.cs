@@ -1,8 +1,7 @@
 using Carter;
-using Carter.OpenApi;
 using SpotifyUser;
 
-public class RegistrationEndPoints : ICarterModule
+public class RegistrationEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {

@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Carter;
+using SpotifyAPI.Web.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 DotEnv.Load();
 var clientId = Environment.GetEnvironmentVariable("SPOTIFY_CLIENT_ID");
@@ -16,6 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddSingleton<Spotify>();
 builder.Services.AddScoped<ISpotifyService, Spotify>();
+builder.Services.AddScoped<ISpotifyService>(provider => new Spotify());
 builder.Services.AddScoped<IUser, User>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(Options =>
@@ -77,7 +80,7 @@ app.MapGet("/", () =>
 {
     Console.WriteLine("Route Hit");
 
-    return clientId.ToString();
+    return Results.Ok("API is running!)");
 })
 .WithName("Test Route")
 .WithSummary("This is a test route for the service.")
@@ -87,46 +90,9 @@ app.MapGet("/", () =>
 
 
 
-// Spotify Data Collection Routes
-app.MapGet("/Spotify", async (ISpotifyService spotify) =>
-{
-    return spotify.ToString();
-});
 
-app.MapGet("/Spotify/Search/Artist/{search}", async (HttpContext context, string search) =>
-{
-    var artists = await spotifyService.SearchArtists(search);
-    return Results.Ok(artists.ToList());
-});
 
-app.MapGet("/Spotify/Search/Album/{search}", async (HttpContext context, string search) =>
-{
-    var albums = await spotifyService.SearchAlbums(search);
-    return Results.Ok(albums.ToList());
-});
 
-app.MapGet("/Spotify/Search/Track/{search}", async (HttpContext context, string search) =>
-{
-    var tracks = await spotifyService.SearchTracks(search);
-    return Results.Ok(tracks.ToList());
-});
 
-app.MapGet("/Spotify/Album/{id}", async (HttpContext context, string id) =>
-{
-    var album = await spotifyService.GetAlbum(id);
-    return Results.Ok(album);
-});
-
-app.MapGet("/Spotify/Artist/{id}", async (HttpContext context, string id) =>
-{
-    var artist = await spotifyService.GetArtist(id);
-    return Results.Ok(artist);
-});
-
-app.MapGet("/Spotify/Track/{id}", async (HttpContext context, string id) =>
-{
-    var track = await spotifyService.GetTrack(id);
-    return Results.Ok(track);
-});
 
 app.Run();

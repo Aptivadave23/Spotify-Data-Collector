@@ -1,8 +1,6 @@
 using Carter;
 using SpotifyUser; // Ensure this is the correct namespace for IUser
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
+
 
 public class UserEndPoints : ICarterModule
 {
