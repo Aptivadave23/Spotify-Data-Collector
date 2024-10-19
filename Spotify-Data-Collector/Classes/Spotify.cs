@@ -12,11 +12,14 @@ namespace SpotifyDataCollector
         /// </summary>
         public Spotify()
         {
-            // Implement constructor logic here
             clientId = Environment.GetEnvironmentVariable("SPOTIFY_CLIENT_ID");
             clientSecret = Environment.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET");
-        }
 
+            if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret))
+            {
+                throw new InvalidOperationException("Spotify Client ID or Secret is missing. Please check your environment variables.");
+            }
+        }
         // Add your class members and methods here
 
         private string clientId { get; set; }
@@ -39,20 +42,35 @@ namespace SpotifyDataCollector
         {
             return clientSecret;
         }
-        /// <summary>
-        /// Initializes the Spotify client with the client ID and client secret.
+         /// <summary>
+        /// Initializes the Spotify client asynchronously.
         /// </summary>
-        /// <returns>Returns the Spotify client.</returns>
         public async Task InitializeClientAsync()
         {
-            var config = SpotifyClientConfig
-                .CreateDefault()
-                .WithAuthenticator(new ClientCredentialsAuthenticator(clientId, clientSecret));
-            var request = new ClientCredentialsRequest(clientId, clientSecret);
-            var response = await new OAuthClient(config).RequestToken(request);
+            if (spotifyClient == null)
+            {
+                var config = SpotifyClientConfig
+                    .CreateDefault()
+                    .WithAuthenticator(new ClientCredentialsAuthenticator(clientId, clientSecret));
 
-            spotifyClient = new SpotifyClient(config.WithToken(response.AccessToken));
+                var request = new ClientCredentialsRequest(clientId, clientSecret);
+                var response = await new OAuthClient(config).RequestToken(request);
+
+                spotifyClient = new SpotifyClient(config.WithToken(response.AccessToken));
+            }
         }
+
+        /// <summary>
+        /// Ensures that the Spotify client has been initialized before usage.
+        /// </summary>
+        private async Task EnsureClientInitializedAsync()
+        {
+            if (spotifyClient == null)
+            {
+                await InitializeClientAsync();
+            }
+        }
+
 
         /// <summary>
         /// Get artist details.
@@ -61,6 +79,7 @@ namespace SpotifyDataCollector
         /// <returns>Artist DTO.</returns>
         public async Task<ArtistDto> GetArtist(string artistId)
         {
+            await EnsureClientInitializedAsync(); // Ensure the client is initialized
             var artist = await spotifyClient.Artists.Get(artistId);
             return new ArtistDto(artist.Name, artist.Id, artist.Genres, artist.ExternalUrls["spotify"], artist.Popularity.ToString());
         }
@@ -72,6 +91,7 @@ namespace SpotifyDataCollector
         /// <returns>Track DTO.</returns>
         public async Task<TrackDTO> GetTrack(string trackId)
         {
+            await EnsureClientInitializedAsync(); // Ensure the client is initialized
             var track = await spotifyClient.Tracks.Get(trackId);
             return new TrackDTO(track.Name, track.Id, track.DurationMs.ToString(), track.Popularity.ToString(), track.ExternalUrls["spotify"], track.Album.Id, track.Album.ReleaseDate, track.DiscNumber.ToString(), track.TrackNumber.ToString(), track.Artists[0].Id, track.Artists[0].Name);
         }
@@ -83,6 +103,7 @@ namespace SpotifyDataCollector
         /// <returns>Album DTO.</returns>
         public async Task<AlbumDto> GetAlbum(string albumId)
         {
+            await EnsureClientInitializedAsync(); // Ensure the client is initialized
             var album = await spotifyClient.Albums.Get(albumId, new AlbumRequest { Market = "US" });
             return new AlbumDto(album.Name, album.Id, album.ReleaseDate, album.Images[0].Url,
                 album.AlbumType.ToString(), album.TotalTracks.ToString(), "0", album.ExternalUrls["spotify"].ToString(), album.Artists[0].Id, album.Artists[0].Name);
@@ -95,6 +116,7 @@ namespace SpotifyDataCollector
         /// <returns>FullPlaylist object.</returns>
         public async Task<FullPlaylist> GetPlaylist(string playlistId)
         {
+            await EnsureClientInitializedAsync(); // Ensure the client is initialized
             return await spotifyClient.Playlists.Get(playlistId);
         }
 
@@ -105,6 +127,7 @@ namespace SpotifyDataCollector
         /// <returns>List of Album DTOs.</returns>
         public async Task<List<AlbumDto>> GetArtistAlbums(string artistId)
         {
+            await EnsureClientInitializedAsync(); // Ensure the client is initialized
             var pagingResult = await spotifyClient.Artists.GetAlbums(artistId, new ArtistsAlbumsRequest { Market = "US" });
             var albumDTOs = pagingResult.Items.Select(album => new AlbumDto(
                 album.Name, album.Id, album.ReleaseDate, album.Images[0].Url,
@@ -122,6 +145,7 @@ namespace SpotifyDataCollector
         /// <returns>Search Response object.</returns>
         public async Task<SearchResponse> Search(string query, SearchRequest.Types searchType, string market = "US")
         {
+            await EnsureClientInitializedAsync(); // Ensure the client is initialized
             var searchRequest = new SearchRequest(searchType, query)
             {
                 Market = market
@@ -137,6 +161,7 @@ namespace SpotifyDataCollector
         /// <returns>List of Album DTOs.</returns>
         public async Task<List<AlbumDto>> SearchAlbums(string search)
         {
+            await EnsureClientInitializedAsync(); // Ensure the client is initialized
             var searchResults = await Search(search, SearchRequest.Types.Album);
 
             var Albums = searchResults.Albums.Items.ToList();
@@ -173,6 +198,7 @@ namespace SpotifyDataCollector
         /// <returns>List of Artist DTOs.</returns>
         public async Task<List<ArtistDto>> SearchArtists(string search)
         {
+            await EnsureClientInitializedAsync(); // Ensure the client is initialized
             var searchResults = await Search(search, SearchRequest.Types.Artist);
 
             var Artists = searchResults.Artists.Items.ToList();
@@ -204,6 +230,7 @@ namespace SpotifyDataCollector
         /// <returns>List of Track DTOs.</returns>
         public async Task<List<TrackDTO>> SearchTracks(string search)
         {
+            await EnsureClientInitializedAsync(); // Ensure the client is initialized
             var searchResults = await Search(search, SearchRequest.Types.Track);
 
             var Tracks = searchResults.Tracks.Items.ToList();

@@ -1,31 +1,24 @@
 using Carter;
 using SpotifyUser; // Ensure this is the correct namespace for IUser
-
+using Microsoft.AspNetCore.Mvc;
 
 public class UserEndPoints : ICarterModule
 {
-    // Remove the constructor-level dependency injection
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/user/RecentTracks/{trackCount:int?}", async (HttpContext context, int? trackCount, IUser user) =>
+        // Map the endpoint to retrieve recent tracks for the user
+        app.MapGet("/user/RecentTracks/{trackCount:int?}", async (HttpContext context, [FromRoute] int? trackCount, [FromServices] IUser user) =>
         {
-            // Access the IUser instance from the request's service provider (dependency injection)
-            //var user = context.RequestServices.GetRequiredService<IUser>();
-           
-            // Check if the SpotifyClient is initialized
-             // Check to see if the user has a Spotify client
+            // Check if the SpotifyClient is initialized and if the token is expired, refresh it
             if ((user.SpotifyClient == null) || (user.IsTokenExpired()))
             {
                 await user.RefreshTokenAsync();
             }
 
-            
+            // Fetch recent tracks with a default of 10 tracks if trackCount is not specified
+            var recentTracks = await user.GetRecentTracksAsync(null, DateTime.Now, trackCount: trackCount ?? 10);
 
-
-            // Here, call the method that uses the SpotifyClient, for example:
-            // Fetch recent tracks, with a default of 10 tracks if not specified
-            var recentTracks = await user.GetRecentTracksAsync(null, DateTime.Now,trackCount: trackCount ?? 10);
-
+            // Return the result in an Ok response
             return Results.Ok(recentTracks);
         })
         .WithDisplayName("Get Recent Tracks")

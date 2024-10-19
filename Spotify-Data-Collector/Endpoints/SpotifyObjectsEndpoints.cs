@@ -1,18 +1,18 @@
 using Carter;
 using SpotifyDataCollector;
+using Microsoft.AspNetCore.Mvc;
 
-public class SpotifyObjectsEndPoints: ICarterModule
+public class SpotifyObjectsEndPoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/Spotify", async (ISpotifyService spotify) =>
+        app.MapGet("/Spotify", async ([FromServices] ISpotifyService spotify) =>
         {
             return spotify.ToString();
         });
 
-        app.MapGet("/Spotify/Search/Artist/{search}", async (HttpContext context, string search, ISpotifyService spotifyService) =>
+        app.MapGet("/Spotify/Search/Artist/{search}", async (HttpContext context, [FromRoute] string search, [FromServices] ISpotifyService spotifyService) =>
         {
-            //var spotifyService = context.RequestServices.GetService<ISpotifyService>();
             var artists = await spotifyService.SearchArtists(search);
             return Results.Ok(artists.ToList());
         })
@@ -21,9 +21,8 @@ public class SpotifyObjectsEndPoints: ICarterModule
         .WithSummary("Search for artists by name")
         .WithTags("Spotify");
 
-        app.MapGet("/Spotify/Search/Album/{search}", async (HttpContext context, string search) =>
+        app.MapGet("/Spotify/Search/Album/{search}", async (HttpContext context, [FromRoute] string search, [FromServices] ISpotifyService spotifyService) =>
         {
-            var spotifyService = context.RequestServices.GetService<ISpotifyService>();
             var albums = await spotifyService.SearchAlbums(search);
             return Results.Ok(albums.ToList());
         })
@@ -32,9 +31,8 @@ public class SpotifyObjectsEndPoints: ICarterModule
         .WithSummary("Search for albums by name")
         .WithTags("Spotify");
 
-        app.MapGet("/Spotify/Search/Track/{search}", async (HttpContext context, string search) =>
+        app.MapGet("/Spotify/Search/Track/{search}", async (HttpContext context, [FromRoute] string search, [FromServices] ISpotifyService spotifyService) =>
         {
-            var spotifyService = context.RequestServices.GetService<ISpotifyService>();
             var tracks = await spotifyService.SearchTracks(search);
             return Results.Ok(tracks.ToList());
         })
@@ -43,9 +41,8 @@ public class SpotifyObjectsEndPoints: ICarterModule
         .WithSummary("Search for tracks by name")
         .WithTags("Spotify");
 
-        app.MapGet("/Spotify/Album/{id}", async (HttpContext context, string id) =>
+        app.MapGet("/Spotify/Album/{id}", async (HttpContext context, [FromRoute] string id, [FromServices] ISpotifyService spotifyService) =>
         {
-            var spotifyService = context.RequestServices.GetService<ISpotifyService>();
             var album = await spotifyService.GetAlbum(id);
             return Results.Ok(album);
         })
@@ -54,9 +51,8 @@ public class SpotifyObjectsEndPoints: ICarterModule
         .WithSummary("Get an album by ID")
         .WithTags("Spotify");
 
-        app.MapGet("/Spotify/Artist/{id}", async (HttpContext context, string id) =>
+        app.MapGet("/Spotify/Artist/{id}", async (HttpContext context, [FromRoute] string id, [FromServices] ISpotifyService spotifyService) =>
         {
-            var spotifyService = context.RequestServices.GetService<ISpotifyService>();
             var artist = await spotifyService.GetArtist(id);
             return Results.Ok(artist);
         })
@@ -65,9 +61,8 @@ public class SpotifyObjectsEndPoints: ICarterModule
         .WithSummary("Get an artist by ID")
         .WithTags("Spotify");
 
-        app.MapGet("/Spotify/Track/{id}", async (HttpContext context, string id) =>
+        app.MapGet("/Spotify/Track/{id}", async (HttpContext context, [FromRoute] string id, [FromServices] ISpotifyService spotifyService) =>
         {
-            var spotifyService = context.RequestServices.GetService<ISpotifyService>();
             var track = await spotifyService.GetTrack(id);
             return Results.Ok(track);
         })

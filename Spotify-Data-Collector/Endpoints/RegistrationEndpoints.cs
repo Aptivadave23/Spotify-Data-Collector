@@ -1,11 +1,12 @@
 using Carter;
+using Microsoft.AspNetCore.Mvc;
 using SpotifyUser;
 
 public class RegistrationEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/login", async (HttpContext context, IUser user) =>
+        app.MapGet("/login", async (HttpContext context, [FromServices]IUser user) =>
         {
             return user.InitiateSpotifyLoginAsync(context);
         })
@@ -15,7 +16,7 @@ public class RegistrationEndpoints : ICarterModule
         .WithSummary("Initiate the Spotify login process.")
         .WithName("Login");
 
-        app.MapGet("/redirect", async (HttpContext context, IUser user) =>
+        app.MapGet("/redirect", async (HttpContext context, [FromServices] IUser user) =>
         {
             var code = context.Request.Query["code"].ToString();
             if (string.IsNullOrEmpty(code))
