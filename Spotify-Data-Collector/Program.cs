@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddSingleton<Spotify>();  // Register the Spotify service
 builder.Services.AddScoped<ISpotifyService, Spotify>(); // Register ISpotifyService
-
+builder.Services.AddScoped<IUser, User>(); // Register IUser
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(Options =>
 {
@@ -72,10 +72,6 @@ app.UseHttpsRedirection();
 app.MapCarter();
 
 // Additional routes (make sure to add your other routes here)
-app.MapGet("/", () => Results.Ok("API is running!"))
-    .WithName("Test Route")
-    .WithSummary("This is a test route for the service.")
-    .WithDescription("This route is used to test the service and ensure that it is running correctly.")
-    .WithTags(new string[] { "Test", "Service" });
+
 
 app.Run();
