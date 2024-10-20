@@ -1,5 +1,5 @@
 using Carter;
-using SpotifyDataCollector;
+using SpotifyDataCollector;  // Ensure this is included to reference your DTOs
 using Microsoft.AspNetCore.Mvc;
 
 public class SpotifyObjectsEndPoints : ICarterModule
@@ -11,9 +11,9 @@ public class SpotifyObjectsEndPoints : ICarterModule
             var artists = await spotifyService.SearchArtists(search);
             return Results.Ok(artists.ToList());
         })
-        .Produces<OkResult>(200)
-        .Produces<BadRequestResult>(400)
-        .Produces<NotFoundResult>(404)
+        .Produces<List<SpotifyDataCollector.ArtistDto>>(200, "application/json")  // Using your DTO for Artist
+        .ProducesProblem(400)
+        .ProducesProblem(404)
         .WithDescription("Search for artists by name")
         .WithDisplayName("Search Artists")
         .WithSummary("Search for artists by name")
@@ -24,9 +24,9 @@ public class SpotifyObjectsEndPoints : ICarterModule
             var albums = await spotifyService.SearchAlbums(search);
             return Results.Ok(albums.ToList());
         })
-        .Produces<OkResult>(200)
-        .Produces<BadRequestResult>(400)
-        .Produces<NotFoundResult>(404)
+        .Produces<List<SpotifyDataCollector.AlbumDto>>(200, "application/json")  // Using your DTO for Album
+        .ProducesProblem(400)
+        .ProducesProblem(404)
         .WithDescription("Search for albums by name")
         .WithDisplayName("Search Albums")
         .WithSummary("Search for albums by name")
@@ -37,9 +37,9 @@ public class SpotifyObjectsEndPoints : ICarterModule
             var tracks = await spotifyService.SearchTracks(search);
             return Results.Ok(tracks.ToList());
         })
-        .Produces<OkResult>(200)
-        .Produces<BadRequestResult>(400)
-        .Produces<NotFoundResult>(404)
+        .Produces<List<SpotifyDataCollector.TrackDTO>>(200, "application/json")  // Using your DTO for Track
+        .ProducesProblem(400)
+        .ProducesProblem(404)
         .WithDescription("Search for tracks by name")
         .WithDisplayName("Search Tracks")
         .WithSummary("Search for tracks by name")
@@ -50,9 +50,9 @@ public class SpotifyObjectsEndPoints : ICarterModule
             var album = await spotifyService.GetAlbum(id);
             return Results.Ok(album);
         })
-        .Produces<OkResult>(200)
-        .Produces<BadRequestResult>(400)
-        .Produces<NotFoundResult>(404)
+        .Produces<SpotifyDataCollector.AlbumDto>(200, "application/json")  // Using your DTO for Album
+        .ProducesProblem(400)
+        .ProducesProblem(404)
         .WithDescription("Get an album by ID")
         .WithDisplayName("Get Album")
         .WithSummary("Get an album by ID")
@@ -63,9 +63,9 @@ public class SpotifyObjectsEndPoints : ICarterModule
             var artist = await spotifyService.GetArtist(id);
             return Results.Ok(artist);
         })
-        .Produces<OkResult>(200)
-        .Produces<BadRequestResult>(400)
-        .Produces<NotFoundResult>(404)
+        .Produces<SpotifyDataCollector.ArtistDto>(200, "application/json")  // Using your DTO for Artist
+        .ProducesProblem(400)
+        .ProducesProblem(404)
         .WithDescription("Get an artist by ID")
         .WithDisplayName("Get Artist")
         .WithSummary("Get an artist by ID")
@@ -76,9 +76,9 @@ public class SpotifyObjectsEndPoints : ICarterModule
             var track = await spotifyService.GetTrack(id);
             return Results.Ok(track);
         })
-        .Produces<OkResult>(200)
-        .Produces<BadRequestResult>(400)
-        .Produces<NotFoundResult>(404)
+        .Produces<SpotifyDataCollector.TrackDTO>(200, "application/json")  // Using your DTO for Track
+        .ProducesProblem(400)
+        .ProducesProblem(404)
         .WithDescription("Get a track by ID")
         .WithDisplayName("Get Track")
         .WithSummary("Get a track by ID")

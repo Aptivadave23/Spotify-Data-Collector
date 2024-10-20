@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using SpotifyAPI.Web;
-using Spotify_Data_Collector;
+using SpotifyDataCollector;
 
 namespace SpotifyUser
 {

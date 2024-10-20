@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using SpotifyAPI.Web;
 using SpotifyDataCollector;
-using Spotify_Data_Collector;
 
 namespace SpotifyUser
 {
