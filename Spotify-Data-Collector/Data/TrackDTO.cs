@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using Spotify_Data_Collector.Data;
 using SpotifyDataCollector;
 
-namespace Spotify_Data_Collector{
+namespace SpotifyDataCollector{
 
     public class TrackDTO{
         public string Name { get; set; }
