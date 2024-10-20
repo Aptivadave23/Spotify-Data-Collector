@@ -10,6 +10,7 @@ public class RegistrationEndpoints : ICarterModule
         {
             return user.InitiateSpotifyLoginAsync(context);
         })
+        .Produces<OkResult>(200)
         .WithDisplayName("Login")
         .WithDescription("Initiate the Spotify login process.")
         .WithTags("Registration")
