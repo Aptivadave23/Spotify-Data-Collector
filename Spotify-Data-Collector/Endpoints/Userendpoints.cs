@@ -1,6 +1,9 @@
 using Carter;
 using SpotifyUser; // Ensure this is the correct namespace for IUser
 using Microsoft.AspNetCore.Mvc;
+using SpotifyDataCollector;
+using ResponseMessages;
+
 
 public class UserEndPoints : ICarterModule
 {
@@ -21,6 +24,9 @@ public class UserEndPoints : ICarterModule
             // Return the result in an Ok response
             return Results.Ok(recentTracks);
         })
+        .Produces<List<TrackDTO>>(200, "application/json")
+        .Produces<ErrorResponse>(400, "application/json")
+        .Produces<ErrorResponse>(404, "application/json")
         .WithDisplayName("Get Recent Tracks")
         .WithSummary("Get the most recent tracks played by the user.")
         .WithDescription("Get the most recent tracks played by the user.")

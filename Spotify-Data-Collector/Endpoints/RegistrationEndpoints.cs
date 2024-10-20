@@ -1,6 +1,8 @@
 using Carter;
 using Microsoft.AspNetCore.Mvc;
 using SpotifyUser;
+using ResponseMessages;
+
 
 public class RegistrationEndpoints : ICarterModule
 {
@@ -11,6 +13,9 @@ public class RegistrationEndpoints : ICarterModule
             return user.InitiateSpotifyLoginAsync(context);
         })
         .Produces<OkResult>(200)
+        .Produces<ErrorResponse>(400, "application/json")
+        .Produces<ErrorResponse>(404, "application/json")
+        .Produces<ErrorResponse>(500, "application/json")
         .WithDisplayName("Login")
         .WithDescription("Initiate the Spotify login process.")
         .WithTags("Registration")
@@ -34,8 +39,13 @@ public class RegistrationEndpoints : ICarterModule
             // Retrieve the user profile
             var profile = await user.SpotifyClient.UserProfile.Current();
             user.SpotifyUserID = profile.Id;
+            //todo:  Save the user profile to the database, for now just return the user's Spotify ID and token
             return Results.Ok(user.SpotifyUserID + ", " + user.SpotifyToken);
         })
+        .Produces<OkResult>(200)
+        .Produces<ErrorResponse>(400, "application/json")
+        .Produces<ErrorResponse>(404, "application/json")
+        .Produces<ErrorResponse>(500, "application/json")
         .WithDisplayName("Redirect")
         .WithDescription("Handle the redirect from Spotify after login.")
         .WithTags("Registration")
