@@ -1,0 +1,27 @@
+{
+  "name": "spotify-data-collector",
+  "version": "0.0.0",
+  "description": "Allows a user to connect to their spotify account and pull historical listening data for themselves",
+  "main": "program.cs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Aptivadave23/Spotify-Data-Collector.git"
+  },
+  "keywords": [
+    "Spotify",
+    ".Net",
+    "C#"
+  ],
+  "author": "David Coxsey",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Aptivadave23/Spotify-Data-Collector/issues"
+  },
+  "homepage": "https://github.com/Aptivadave23/Spotify-Data-Collector#readme",
+  "devDependencies": {
+    "semantic-release": "^24.2.0"
+  }
+}
