@@ -23,5 +23,8 @@
   "homepage": "https://github.com/Aptivadave23/Spotify-Data-Collector#readme",
   "devDependencies": {
     "semantic-release": "^24.2.0"
+  },
+  "dependencies": {
+    "execa": "^5.1.1"
   }
 }
