@@ -1,12 +1,14 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - main  # or your main branch name
+ workflow_run:
+    workflows: ["build"]
+    types:
+      - completed
 
 jobs:
   release:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
 
     steps:
