@@ -1,5 +1,8 @@
 {
     "branches": ["main"],
+    "preset": "angular",
+    "tagFormat": "v${version}",
+    "initialVersion": "0.0.0",
     "repositoryUrl": "https://github.com/Aptivadave23/Spotify-Data-Collector.git",
     "plugins": [
       "@semantic-release/commit-analyzer",
