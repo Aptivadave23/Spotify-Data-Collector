@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using SpotifyAPI.Web;
 using SpotifyDataCollector;
 
+
 namespace SpotifyUser
 {
     public class User : IUser
@@ -127,7 +128,7 @@ namespace SpotifyUser
         }
 
         // Method to get recent tracks from Spotify
-        public async Task<List<TrackDTO>> GetRecentTracksAsync(DateTimeOffset? startTime = null, DateTimeOffset? endTime = null, int trackCount = 10)
+        public async Task<List<UserTrackDTO>> GetRecentTracksAsync(DateTimeOffset? startTime = null, DateTimeOffset? endTime = null, int trackCount = 10)
         {
             var spotify = SpotifyClient; // Use the SpotifyClient property instead of passing it in
             var recentlyPlayedRequest = new PlayerRecentlyPlayedRequest
@@ -146,7 +147,7 @@ namespace SpotifyUser
             }
 
             var recentlyPlayed = await spotify.Player.GetRecentlyPlayed(recentlyPlayedRequest);
-            var tracks = recentlyPlayed.Items.Select(item => new TrackDTO(
+            var tracks = recentlyPlayed.Items.Select(item => new UserTrackDTO(
                 item.Track.Name,
                 item.Track.Id,
                 item.Track.DurationMs.ToString(),
@@ -157,11 +158,24 @@ namespace SpotifyUser
                 item.Track.DiscNumber.ToString(),
                 item.Track.TrackNumber.ToString(),
                 item.Track.Artists[0].Id,
-                item.Track.Artists[0].Name
+                item.Track.Artists[0].Name,
+                new TimeZones().SetCentralTime(item.PlayedAt)
             )).ToList();
 
             return tracks;
         }
+
+        /*public async Task<List<TrackDTO>> GetTracksInTimeRangeAsync(DateTimeOffset startTime, DateTimeOffset endTime, int trackCount = 10)
+        {
+            var spotify = SpotifyClient; // Use the SpotifyClient property instead of passing it in
+            var recentlyPlayedRequest = new PlayerRecentlyPlayedRequest
+            {
+                Limit = trackCount,
+                After = (long)(startTime - new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero)).TotalMilliseconds
+            };
+
+            return NotImplementedException();
+        }*/
 
         // Method to check if the token is expiring in the next minute
         public bool IsTokenExpired()

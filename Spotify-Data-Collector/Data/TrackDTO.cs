@@ -19,6 +19,8 @@ namespace SpotifyDataCollector{
 
         public string ArtistId { get; set; }
         public string ArtistName { get; set; }
+        
+
 
         public TrackDTO(string name, string spotifyId, string duration, string popularity, string spotifyUrl, string albumId, string releaseDate, string disc_Number, string track_Number, string artistId, string artistName)
         {
@@ -35,5 +37,16 @@ namespace SpotifyDataCollector{
             ArtistName = artistName;
         }
         
+    }
+
+    public class UserTrackDTO : TrackDTO {
+        [JsonPropertyOrder(1000)]
+        public string PlayedDateTime { get; set; }
+    
+        public UserTrackDTO(string name, string spotifyId, string duration, string popularity, string spotifyUrl, string albumId, string releaseDate, string disc_Number, string track_Number, string artistId, string artistName, string playedDateTime)
+            : base(name, spotifyId, duration, popularity, spotifyUrl, albumId, releaseDate, disc_Number, track_Number, artistId, artistName)
+        {
+            PlayedDateTime = playedDateTime;
+        }
     }
 }
