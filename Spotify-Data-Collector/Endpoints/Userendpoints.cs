@@ -44,10 +44,11 @@ public class UserEndPoints : ICarterModule
             }
 
             // Fetch tracks listened to in the specified time range with a default of 10 tracks if trackCount is not specified
-            
+            var tracks = await user.GetTracksInTimeRangeAsync(tracksRequest.StartTime, tracksRequest.EndTime, 50);
+
 
             // Return the result in an Ok response
-            return Results.Ok(tracksRequest.StartTime + ", " + tracksRequest.EndTime + ", " + tracksRequest.TrackCount);
+            return Results.Ok(tracks);
         })
         .WithDescription("Get tracks listened to in a specific time range.")
         .WithDisplayName("Get Tracks In Time Range")

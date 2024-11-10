@@ -127,55 +127,136 @@ namespace SpotifyUser
             TokenExpireTime = DateTime.Now.AddSeconds(response.ExpiresIn).ToString();
         }
 
-        // Method to get recent tracks from Spotify
-        public async Task<List<UserTrackDTO>> GetRecentTracksAsync(DateTimeOffset? startTime = null, DateTimeOffset? endTime = null, int trackCount = 10)
+        // Method to get recent tracks from Spotify with pagination handling
+        public async Task<List<UserTrackDTO>> GetTracksInTimeRangeAsync(DateTime startTime, DateTime endTime, int trackCount = 50)
         {
-            var spotify = SpotifyClient; // Use the SpotifyClient property instead of passing it in
-            var recentlyPlayedRequest = new PlayerRecentlyPlayedRequest
-            {
-                Limit = trackCount
-            };
+            var tracks = new List<UserTrackDTO>(); // Final list to return
+            DateTime lastFetchedDate = startTime;
 
-            // Convert startTime and endTime to milliseconds since Unix epoch if they are not null
-            if (startTime.HasValue)
-            {
-                recentlyPlayedRequest.After = (long)(startTime.Value - new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero)).TotalMilliseconds;
-            }
-            if (endTime.HasValue)
-            {
-                recentlyPlayedRequest.Before = (long)(endTime.Value - new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero)).TotalMilliseconds;
-            }
+            Console.WriteLine($"Initial Start Time: {startTime}, End Time: {endTime}");
 
-            var recentlyPlayed = await spotify.Player.GetRecentlyPlayed(recentlyPlayedRequest);
-            var tracks = recentlyPlayed.Items.Select(item => new UserTrackDTO(
-                item.Track.Name,
-                item.Track.Id,
-                item.Track.DurationMs.ToString(),
-                item.Track.Popularity.ToString(),
-                item.Track.ExternalUrls["spotify"],
-                item.Track.Album.Id,
-                item.Track.Album.ReleaseDate,
-                item.Track.DiscNumber.ToString(),
-                item.Track.TrackNumber.ToString(),
-                item.Track.Artists[0].Id,
-                item.Track.Artists[0].Name,
-                new TimeZones().SetCentralTime(item.PlayedAt)
-            )).ToList();
+            // Set the initial after timestamp to null for the first request
+            string afterTimestamp = null;
+
+            while (lastFetchedDate <= endTime)
+            {
+                // Get recent tracks starting from the last fetched date or a specific cursor
+                var recentTracksTemp = await GetRecentTracksAsync(lastFetchedDate, null, trackCount, afterTimestamp);
+
+                if (!recentTracksTemp.Any())
+                {
+                    Console.WriteLine("No tracks found for the given time range.");
+                    break;
+                }
+
+                Console.WriteLine($"Fetched {recentTracksTemp.Count()} tracks.");
+
+                tracks.AddRange(recentTracksTemp);
+
+                // If we fetched less than the requested track count, we've hit the end of available data
+                if (recentTracksTemp.Count() < trackCount)
+                {
+                    break;
+                }
+
+                // Update lastFetchedDate to the time of the last fetched track
+                lastFetchedDate = DateTime.Parse(recentTracksTemp.Last().PlayedDateTime).ToUniversalTime();
+                Console.WriteLine($"Updated Last Date: {lastFetchedDate}");
+
+                // Update the cursor for the next page of results
+                afterTimestamp = recentTracksTemp.Last().PlayedDateTime;
+            }
 
             return tracks;
         }
 
-        /*public async Task<List<TrackDTO>> GetTracksInTimeRangeAsync(DateTimeOffset startTime, DateTimeOffset endTime, int trackCount = 10)
+        // Method to get recent tracks from Spotify with startTime, endTime, and pagination
+        public async Task<List<UserTrackDTO>> GetRecentTracksAsync(DateTime? startTime = null, DateTime? endTime = null, int trackCount = 10, string afterTimestamp = null)
         {
             var spotify = SpotifyClient; // Use the SpotifyClient property instead of passing it in
             var recentlyPlayedRequest = new PlayerRecentlyPlayedRequest
             {
                 Limit = trackCount,
-                After = (long)(startTime - new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero)).TotalMilliseconds
             };
 
-            return NotImplementedException();
-        }*/
+            // Convert afterTimestamp (string) to long? (milliseconds since Unix epoch)
+            if (!string.IsNullOrEmpty(afterTimestamp))
+            {
+                long afterTimestampMillis = new TimeZones().ConvertToUnixMilliseconds(DateTime.Parse(afterTimestamp));
+                recentlyPlayedRequest.After = afterTimestampMillis;
+            }
+
+            // Convert startTime and endTime to milliseconds since Unix epoch if they are not null
+            if (startTime.HasValue)
+            {
+                Console.WriteLine($"Start Time (Before Conversion): {startTime.Value}");
+                recentlyPlayedRequest.After = new TimeZones().ConvertToUnixMilliseconds(startTime.Value);
+                Console.WriteLine($"Start Time (After Conversion): {recentlyPlayedRequest.After}");
+            }
+
+            if (endTime.HasValue)
+            {
+                Console.WriteLine($"End Time (Before Conversion): {endTime.Value}");
+                recentlyPlayedRequest.Before = new TimeZones().ConvertToUnixMilliseconds(endTime.Value);
+                Console.WriteLine($"End Time (After Conversion): {recentlyPlayedRequest.Before}");
+            }
+
+            // Fetch recent tracks from Spotify
+            var recentlyPlayed = await spotify.Player.GetRecentlyPlayed(recentlyPlayedRequest);
+            Console.WriteLine($"Fetched {recentlyPlayed.Items.Count} tracks.");
+
+            // Apply filtering directly before creating UserTrackDTO objects
+            var tracks = recentlyPlayed.Items
+                .Select(item =>
+                {
+                    // Ensure the PlayedAt time is in UTC
+                    DateTime playedAtUtc = item.PlayedAt.ToUniversalTime(); // Ensure UTC first
+                    Console.WriteLine($"Track PlayedAt (UTC): {playedAtUtc}");
+
+                    // Print the startTime and endTime in milliseconds for debugging
+                    long startTimeMillis = startTime.HasValue ? new TimeZones().ConvertToUnixMilliseconds(startTime.Value) : 0;
+                    long endTimeMillis = endTime.HasValue ? new TimeZones().ConvertToUnixMilliseconds(endTime.Value) : 0;
+                    Console.WriteLine($"Comparing with Start Time (Millis): {startTimeMillis}, End Time (Millis): {endTimeMillis}");
+
+                    // Filter tracks by startTime and endTime
+                    bool isTrackInRange = true;
+                    if ((startTime.HasValue && playedAtUtc < startTime.Value.ToUniversalTime()) ||
+                        (endTime.HasValue && playedAtUtc > endTime.Value.ToUniversalTime()))
+                    {
+                        isTrackInRange = false;
+                        Console.WriteLine($"Track {item.Track.Name} skipped - PlayedAt {playedAtUtc} is outside the time range.");
+                    }
+
+                    // If the track is within the time range, return it
+                    if (isTrackInRange)
+                    {
+                        return new UserTrackDTO(
+                            item.Track.Name,
+                            item.Track.Id,
+                            item.Track.DurationMs.ToString(),
+                            item.Track.Popularity.ToString(),
+                            item.Track.ExternalUrls["spotify"],
+                            item.Track.Album.Id,
+                            item.Track.Album.ReleaseDate,
+                            item.Track.DiscNumber.ToString(),
+                            item.Track.TrackNumber.ToString(),
+                            item.Track.Artists[0].Id,
+                            item.Track.Artists[0].Name,
+                            playedAtUtc.ToString() // Store the UTC time (or adjust to local time later)
+                        );
+                    }
+
+                    return null;  // Skip track
+                })
+                .Where(track => track != null)  // Exclude null entries from skipped tracks
+                .ToList();
+
+            Console.WriteLine($"Filtered {tracks.Count} tracks within the specified time range.");
+            return tracks;
+        }
+
+
+
 
         // Method to check if the token is expiring in the next minute
         public bool IsTokenExpired()

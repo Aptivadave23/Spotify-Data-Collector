@@ -24,6 +24,7 @@ namespace SpotifyUser
         bool IsTokenExpired();
 
         // Remove SpotifyClient parameter since it's already a property
-        Task<List<UserTrackDTO>> GetRecentTracksAsync(DateTimeOffset? startTime = null, DateTimeOffset? endTime = null, int trackCount = 10);
+        Task<List<UserTrackDTO>> GetRecentTracksAsync(DateTime? startTime = null, DateTime? endTime = null, int trackCount = 10, string afterTimestamp = null);
+        Task<List<UserTrackDTO>> GetTracksInTimeRangeAsync(DateTime startTime, DateTime endTime, int trackCount = 50);
     }
 }
